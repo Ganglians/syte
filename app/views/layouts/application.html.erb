@@ -1,7 +1,11 @@
+<!-- Layout file that serves as a template to DRY like-structured views -->
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Syte</title>
+    <!-- Where the unique title of each view goes -->
+    <title> <%= yield(:title) %> | Syte </title>
+
+    <!-- Cross-site scripting/forgery -->
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -10,6 +14,7 @@
   </head>
 
   <body>
+    <!-- Where the unique contents of each view goes -->
     <%= yield %>
   </body>
 </html>
