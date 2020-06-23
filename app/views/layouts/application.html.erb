@@ -3,7 +3,7 @@
 <html>
   <head>
     <!-- Where the unique title of each view goes -->
-    <title> <%= yield(:title) %> | Syte </title>
+    <title> <%= full_title(yield(:title)) %> </title>
 
     <!-- Cross-site scripting/forgery -->
     <%= csrf_meta_tags %>
