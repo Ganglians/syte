@@ -1,20 +1,17 @@
-<!-- Layout file that serves as a template to DRY like-structured views -->
+<!-- Static pages -->
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- Where the unique title of each view goes -->
+    <!-- Views provide :title to helper method -->
     <title> <%= full_title(yield(:title)) %> </title>
 
-    <!-- Cross-site scripting/forgery -->
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
-
-    <%= stylesheet_link_tag 'application', media: 'all', 'data-turbolinks-track': 'reload' %>
-    <%= javascript_pack_tag 'application', 'data-turbolinks-track': 'reload' %>
+    <!-- Partials for head -->
+    <%= render 'layouts/head' %>
+    <%= render 'layouts/shim' %>
   </head>
 
   <body>
-    <!-- Where the unique contents of each view goes -->
+    <!-- Page body -->
     <%= yield %>
   </body>
 </html>

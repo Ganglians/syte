@@ -1,5 +1,5 @@
 module ApplicationHelper
-  # Returns the full title on a per-page basis (or defaults)
+  # Formats title or returns base if none is provided
   def full_title(page_title = '')
     base_title = "Syte"
     if page_title.empty?
