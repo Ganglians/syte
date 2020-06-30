@@ -59,14 +59,39 @@ a img {
 }
 /* END RESET*/
 
+/*HOME*/
+/*The home view's two main partitions*/
 .hero-one {
   background-color: #c7dbfc;
-  height: 60vh;
+  font-family: 'Open Sans', helvetica, arial, sans;
+  font-size: 5rem;
+  height: 40vh;
+  padding: 10vh;
   text-align: center;
 }
 
 .hero-two {
-  background-color: #c9dbBc;
+  background-color: #c9dbBc; 
   height: 40vh;
+
+  /*Navigaiton links*/
+  ul.links {
+    font-family: 'Open Sans', helvetica, arial, sans; 
+    text-align: center;
+
+    > li {
+      /*display: inline;*/
+      display: inline-block;/*n1*/
+      list-style: none;/*n2*/
+      padding: 0 10vw 0 0vw;
+    }
+  }
+}
+
+/*TEST*/
+.parallelogram {
+  width: 40px;
+  height: 200px;
+  background: #545;
 }
 
