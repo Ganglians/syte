@@ -21,7 +21,7 @@ summary, time, mark, audio, video {
   vertical-align: baseline;
 }
 
-/* HTML5 display-role reset for older browsers */
+/*HTML5 display-role reset for older browsers*/
 article, aside, details, figcaption, figure,
 footer, header, hgroup , menu, nav, section {
   display: block;
@@ -57,17 +57,20 @@ em , i {
 a img {
   border: none;
 }
-/* END RESET*/
+/*END RESET*/
 
 /*HOME*/
 /*The home view's two main partitions*/
 .hero-one {
   background-color: #c7dbfc;
-  font-family: 'Open Sans', helvetica, arial, sans;
-  font-size: 5rem;
-  height: 40vh;
-  padding: 10vh;
-  text-align: center;
+  height: 60vh;
+
+  h1 {
+    font-family: 'Open Sans', helvetica, arial, sans;
+    font-size: 5rem;   
+    padding: 10vh;
+    text-align: center;
+  }
 }
 
 .hero-two {
@@ -75,15 +78,20 @@ a img {
   height: 40vh;
 
   /*Navigaiton links*/
-  ul.links {
+  .links {
     font-family: 'Open Sans', helvetica, arial, sans; 
-    text-align: center;
+    /*Spaces words out to take up whole line*/
+    text-align: justify;
 
-    > li {
-      /*display: inline;*/
-      display: inline-block;/*n1*/
-      list-style: none;/*n2*/
-      padding: 0 10vw 0 0vw;
+    li {
+      display: inline-block;
+    }
+
+    &:after {
+      content: '';
+      /*Makes links take up whole line to ensure justified text*/
+      width: 100%; 
+      display: inline-block;
     }
   }
 }
@@ -93,5 +101,7 @@ a img {
   width: 40px;
   height: 200px;
   background: #545;
+  margin-left: auto;
+  margin-right: auto;
 }
 
