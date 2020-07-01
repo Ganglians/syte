@@ -81,16 +81,9 @@ a img {
   .links {
     font-family: 'Open Sans', helvetica, arial, sans; 
     /*Spaces words out to take up whole line*/
-    text-align: justify;
-
+    display: flex;
+    justify-content: space-between;
     li {
-      display: inline-block;
-    }
-
-    &:after {
-      content: '';
-      /*Makes links take up whole line to ensure justified text*/
-      width: 100%; 
       display: inline-block;
     }
   }
