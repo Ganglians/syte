@@ -74,27 +74,58 @@ a img {
 }
 
 .hero-two {
-  background-color: #c9dbBc; 
+  background-color: #c9dbBc;
   height: 40vh;
 
   /*Navigaiton links*/
   .links {
-    font-family: 'Open Sans', helvetica, arial, sans; 
-    /*Spaces words out to take up whole line*/
+/*  GOAL: RECTANGLES START AT BOTTOM*/
+/*  [x] = Not working    [~] = Possible lead    [*] = Right step/working*/
+
+/*  [x] Padding at top seems to displace rectangles, their starting point is a 
+bit below the second hero*/
+    /*padding-top: 1vh;*/
+
     display: flex;
+    font-family: 'Open Sans', helvetica, arial, sans;
+    /*Spaces words out to take up whole line*/
     justify-content: space-between;
+
+/*  [~] Setting the height of links to 100% of it's parent '.hero-two', has no 
+extra height otherwise*/
+    height: 100%;
     li {
       display: inline-block;
+
+/*    [~]Attempt to make each list element a flexbox so that rectangles can start at bottom of their 'flexbox'.*/      
+/*    [~]The list elements do appear to be working as flexboxes*/
+      display: flex;
+/*    [~]Making sure the rectangles grow horizontally*/
+      flex-grow: column;
+/*    Giving the list flexboxes a height relative to its parent*/
+      height: 100%;
+
+      .parallelogram {
+
+        width: 40px;
+        background: #545;
+/*        RECTANGLES START AT BOTTOM*/
+/*        [x]Attempt at spacing the bars from the top, no success*/
+/*        padding-top: 10vh;*/
+
+/*        [~]Currently the only way to get bar to display starting from bottom*/        
+/*        min-height: 100vh;*/        
+
+/*        [X]Attempt to have rectangles start from bottom of page*/      
+        /*align-items: flex-end;*/
+
+/*        [x] Attempt to set a height for the rectangles, but they start from way at the bottom, beyond the hero size*/
+/*        [~] Viewpoint height seems to be relative to whole page, how to make it so viewpoint height is relative to hero-two instead?*/
+        
+/*        height: 40vh;*/
+/*      [~] Rectangles take up entire space of their flexbox*/
+        flex-grow: 1;
+      }
     }
   }
 }
-
-/*TEST*/
-.parallelogram {
-  width: 40px;
-  height: 200px;
-  background: #545;
-  margin-left: auto;
-  margin-right: auto;
-}
-
