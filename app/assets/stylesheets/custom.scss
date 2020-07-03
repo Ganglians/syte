@@ -79,103 +79,34 @@ a img {
 
   /*Navigaiton links*/
   .links {
-/*    GOAL: RECTANGLES START AT BOTTOM*/
-/*    [x] = Not working    [~] = Possible lead    [*] = Right step/working*/
-
-/*    [x] Padding at top seems to displace rectangles, their starting point is 
-      a bit below the second hero*/
-      /*padding-top: 1vh;*/
-
     display: flex;
     font-family: 'Open Sans', helvetica, arial, sans;
     /*Spaces words out to take up whole line*/
     justify-content: space-between;
-
-/*    [~] Setting the height of links to 100% of it's parent '.hero-two', has 
+      /*Setting the height of links to 100% of it's parent '.hero-two', has 
       no extra height otherwise*/
       height: 100%;
 
-/*    [x] Bar heights under certain settings go below hero-two, cheap fix*/
-      /*overflow: hidden;*/
-
     li {
-        /*display: flex;*/
-        /*justify-content: space-between;*/
-/*      PROBLEM: STYLING THE LIST TAG MEANS STYLING EVERYTHING INSIDE THE LIST
-        TAG, THIS INCLUDES THE LINKS NOT JUST THE PARALLELOGRAMS*/
-
-/*    [*]Remove the list styling (no need to make the list elements blocks)*/
       list-style: none;
-        /*height: 100%;*/
-/*      Had used to remove list styling*/
-        /*display: inline-block;*/
 
-/*      [~]Attempt to make each list element a flexbox so that rectangles can 
-        start at bottom of their 'flexbox'.*/
-
-/*      [~]The list elements do appear to be working as flexboxes*/
-        /*display: flex;*/
-
-/*      [~]Making sure the rectangles grow horizontally*/
-        /*flex-grow: column;*/
-
-/*      [X]Giving the list flexboxes a height relative to its parent (NOTE: 
-        this doesn't seem to affect the dimensions of the list elements at 
-        all*/
-        /*height: 100%;*/
-
-/*      [x]Making container be flex-end makes links start at bottom as well, 
-        adding padding just adds padding BELOW hero-two*/
-        /*align-items: flex-end;*/
-        /*padding-bottom: 50px;*/
-
-      /*Targets the links inside the list elements*/
       a {
-/*        [~]is there a way to make links appear above the bars?*/
-          /*display: block;*/
+
       }
 
       /*Targets the bars inside the list elements*/
       .parallelogram {
-/*      [~]Ensure bar height does not pass the nav links*/
+        /*Ensure bar height does not pass the nav links*/
         max-height: 35vh;
         width: 40px;
         background: #545;
-/*      [~]Arbitrary height as a base for now*/
-        height: 35vh;
-/*      [*]Makes the position independent of all its containers, setting bottom 
-        to zero will mean relative to the page*/
+        /*Arbitrary height as a base for now*/
+        height: 40vh;
+
+        /* Remove bar from normal doc. flow. move to starting point (top left)
+        of non-static parent. Make it start at bottom of said parent*/
         position: absolute;
         bottom: 0;
-
-/*        [x]Transforming works more or less, but not when the height is dynamic*/
-          /*transform: translate(0%, 130%);*/
-          /*vertical-align: bottom;*/
-          /*overflow: hidden;*/
-
-/*        [x]Attempt at spacing the bars from the top, no success*/
-          /*padding-top: 10vh;*/
-
-/*        [x]Currently the only way to get bar to display starting from 
-          bottom*/        
-          /*min-height: 100vh;*/        
-
-/*        [x]Attempt to have rectangles start from bottom of page*/   
-          /*height: 100%;*/
-          /*display: inline-block;*/
-
-/*        [x]Attempt to set a height for the rectangles, but they start from 
-          way at the bottom, beyond the hero size*/
-/*        [x]Viewpoint height seems to be relative to whole page, how to make 
-          it so viewpoint height is relative to hero-two instead?*/   
-          /*height: 40vh;*/
-
-/*        [x]Rectangles take up entire space of their flexbox*/
-/*        This property doesn't seem to change its height*/
-          /*flex-grow: 1;*/
-
-/*        [x]Attempt to set bars below the links*/
-          /*display: block;*/
       }
     }
   }
