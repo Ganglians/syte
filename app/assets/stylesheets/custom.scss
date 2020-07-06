@@ -74,21 +74,55 @@ a img {
 }
 
 .hero-two {
-  /*mixins, variables, etc.*/
-  $neon-pink: #ff00cc;
+  /*Background settings*/
   background-color: #c9dbBc;
+  /*Hero two takes up remaining vertical space available on page*/
   height: 40vh;
 
-  /*Keyframes for bounce animation; alters height like sound bars*/
-  @keyframes bounce {
-    0% {
-      /*transform: scaleY(1);*/
-      height: 30vh;
+  /*Mixins, variables, etc.*/
+  $pink:      #ff00cc;
+  $purple:    #7e44fa;
+  $turquoise: #67E6EC;
+  $green:     #39ff14;
+
+  /*Represents a single bar of specified height, color, and animation speed*/
+  @mixin parallelogram($bar-height, $bar-color, $bar-delay) {
+    /*Keyframes for bounce animation; alters height like sound bars*/
+    @keyframes bounce {
+      0% {
+        height: 25vh;
+      }
+
+      100% {
+        height: 35vh;
+      }
     }
-    100% {
-      /*transform: scaleY(0.95);*/
-      height: 35vh;
-    }
+    /*Ensure bar height does not pass the nav links*/
+    max-height: 35vh;
+    width: 40px;
+    /*Arbitrary height as a base for now*/
+    height: $bar-height;
+    
+    /*Remove bar from normal doc. flow. move to starting point (top left)
+    of non-static parent. Make it start at bottom of said parent. Defaults 
+    to html tag in this case */
+    position: absolute;
+    bottom: 0;
+
+    /*Make bars gradiate to trapsparency*/
+    background: linear-gradient(to top, $bar-color, transparent);
+    /*background: #545;*/
+    /*[~]Make bars slightly transparent*/
+    /*opacity: 0.5;*/
+
+    /*Bind bounce animation for bars*/
+    animation-name: bounce;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-play-state: running;
+    animation-duration: 444ms;
+    animation-delay: $bar-delay;
+    animation-direction: alternate;
   }
 
   /*Navigaiton links*/
@@ -110,40 +144,27 @@ a img {
         /*Remove traditional link style*/
         text-decoration: none;
 
+        /*Links change color when hovered over*/
         &:hover,
         &:active {
-          color: #7e44fa;
+          color: $purple;
         }
       }
 
-      /*Targets the bars inside the list elements*/
-      .parallelogram {
-        /*Ensure bar height does not pass the nav links*/
-        max-height: 35vh;
-        width: 40px;
-        /*background: #545;*/
-        /*Make bars gradiate to trapsparency*/
-        background: linear-gradient(to top, $neon-pink, transparent);
-        /*Arbitrary height as a base for now*/
-        height: 30vh;
+      .bar1 {
+        @include parallelogram(20vh, $purple, 50ms);
+      }
 
-        /*Remove bar from normal doc. flow. move to starting point (top left)
-        of non-static parent. Make it start at bottom of said parent. Defaults 
-        to html tag in this case */
-        position: absolute;
-        bottom: 0;
+      .bar2 {
+        @include parallelogram(29vh, $turquoise, 150ms);
+      }
 
-        /*[~]Make bars slightly transparent*/
-        /*opacity: 0.5;*/
+      .bar3 {
+        @include parallelogram(25vh, $pink, 0ms);
+      }
 
-        /*Bind bounce animation for bars*/
-        animation-name: bounce;
-        animation-timing-function: ease-in-out;
-        animation-iteration-count: infinite;
-        animation-play-state: running;
-        animation-duration: 444ms;
-        animation-delay: 10ms;
-        animation-direction: alternate;
+      .bar4 {
+        @include parallelogram(32vh, $green, 200ms);
       }
     }
   }
