@@ -59,6 +59,9 @@ a img {
 }
 /*END RESET*/
 
+/*mixins, variables, etc.*/
+$neon-pink: #ff00cc;
+
 /*HOME*/
 /*The home view's two main partitions*/
 .hero-one {
@@ -81,6 +84,8 @@ a img {
   .links {
     display: flex;
     font-family: 'Open Sans', helvetica, arial, sans;
+    font-size: 3vh;
+    font-weight: bold;
     /*Spaces words out to take up whole line*/
     justify-content: space-between;
       /*Setting the height of links to 100% of it's parent '.hero-two', has 
@@ -91,7 +96,13 @@ a img {
       list-style: none;
 
       a {
+        /*Remove traditional link style*/
+        text-decoration: none;
 
+        &:hover,
+        &:active {
+          color: #7e44fa;
+        }
       }
 
       /*Targets the bars inside the list elements*/
@@ -99,14 +110,20 @@ a img {
         /*Ensure bar height does not pass the nav links*/
         max-height: 35vh;
         width: 40px;
-        background: #545;
+        /*background: #545;*/
+        /*Make bars gradiate to trapsparency*/
+        background: linear-gradient(to top, $neon-pink, transparent);
         /*Arbitrary height as a base for now*/
         height: 40vh;
 
-        /* Remove bar from normal doc. flow. move to starting point (top left)
-        of non-static parent. Make it start at bottom of said parent*/
+        /*Remove bar from normal doc. flow. move to starting point (top left)
+        of non-static parent. Make it start at bottom of said parent. Defaults 
+        to html tag in this case */
         position: absolute;
         bottom: 0;
+
+        /*[~]Make bars slightly transparent*/
+        /*opacity: 0.5;*/
       }
     }
   }
