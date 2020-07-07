@@ -29,7 +29,7 @@
   $green:     #39ff14;
 
   /*Represents a single bar of specified height, color, and animation speed*/
-  @mixin parallelogram($bar-height, $bar-color, $bar-delay) {
+  @mixin parallelogram($bar-height, $bar-width ,$bar-color, $bar-delay) {
     /*Keyframes for bounce animation; alters height like sound bars*/
     @keyframes bounce {
       0% {
@@ -42,7 +42,8 @@
     }
     /*Ensure bar height does not pass the nav links*/
     max-height: 35vh;
-    width: 40px;
+    /*width: 40px;*/
+    width: $bar-width;
     /*Arbitrary height as a base for now*/
     height: $bar-height;
     
@@ -95,19 +96,19 @@
       }
 
       .bar1 {
-        @include parallelogram(20vh, $purple, 50ms);
+        @include parallelogram(20vh, 40px, $purple, 50ms);
       }
 
       .bar2 {
-        @include parallelogram(29vh, $turquoise, 150ms);
+        @include parallelogram(29vh, 40px, $turquoise, 150ms);
       }
 
       .bar3 {
-        @include parallelogram(25vh, $pink, 0ms);
+        @include parallelogram(25vh, 40px, $pink, 0ms);
       }
 
       .bar4 {
-        @include parallelogram(32vh, $green, 200ms);
+        @include parallelogram(32vh, 40px, $green, 200ms);
       }
     }
   }
