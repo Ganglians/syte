@@ -71,16 +71,17 @@
 
   /*Navigaiton links*/
   .links {
-    display: flex;
     font-family: 'Open Sans', helvetica, arial, sans;
     font-size: 3vh;
     font-weight: bold;
     /*Spaces words out to take up whole line*/
+    display: flex;
     justify-content: space-between;
       /*Setting the height of links to 100% of it's parent '.hero-two', has 
       no extra height otherwise*/
       /*height: 100%;*/
 
+    /*Links with bars*/
     li {
       list-style: none;
 
@@ -111,5 +112,17 @@
         @include parallelogram(32vh, 40px, $green, 200ms);
       }
     }
+  }
+
+  /*Grid*/
+  .grid {
+    /*Horizontal, 'across' grid lines*/
+    .cs1 {
+      background: #545;
+      position: absolute;
+      width: 100vw;
+      height: .5vh;
+      bottom: 10%;
+    } 
   }
 }
