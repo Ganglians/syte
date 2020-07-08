@@ -29,19 +29,9 @@
   $green:     #39ff14;
 
   /*Represents a single bar of specified height, color, and animation speed*/
-  @mixin parallelogram($bar-height, $bar-width ,$bar-color, $bar-delay) {
-    /*Keyframes for bounce animation; alters height like sound bars*/
-    @keyframes bounce {
-      0% {
-        height: 25vh;
-      }
-
-      100% {
-        height: 35vh;
-      }
-    }
+  @mixin parallelogram($bar-height, $bar-width ,$color1, $color2: transparent) {
     /*Ensure bar height does not pass the nav links*/
-    max-height: 35vh;
+    /*max-height: 35vh;*/
     /*width: 40px;*/
     width: $bar-width;
     /*Arbitrary height as a base for now*/
@@ -54,11 +44,22 @@
     bottom: 0;
 
     /*Make bars gradiate to trapsparency*/
-    background: linear-gradient(to top, $bar-color, transparent);
+    background: linear-gradient(to top, $color1, $color2);
     /*background: #545;*/
-    /*[~]Make bars slightly transparent*/
-    /*opacity: 0.5;*/
+  }
 
+  /*Keyframes for bounce animation; alters height like sound bars*/
+  @keyframes bounce {
+    0% {
+      height: 25vh;
+    }
+
+    100% {
+      height: 35vh;
+    }
+  }
+
+  @mixin animate($bar-delay: 0ms) {
     /*Bind bounce animation for bars*/
     animation-name: bounce;
     animation-timing-function: ease-in-out;
@@ -97,32 +98,58 @@
       }
 
       .bar1 {
-        @include parallelogram(20vh, 40px, $purple, 50ms);
+        @include parallelogram(20vh, 40px, $purple);
+        @include animate(50ms);
       }
 
       .bar2 {
-        @include parallelogram(29vh, 40px, $turquoise, 150ms);
+        @include parallelogram(29vh, 40px, $turquoise);
+        @include animate(150ms);
       }
 
       .bar3 {
-        @include parallelogram(25vh, 40px, $pink, 0ms);
+        @include parallelogram(25vh, 40px, $pink);
+        @include animate(0ms);
       }
 
       .bar4 {
-        @include parallelogram(32vh, 40px, $green, 200ms);
+        @include parallelogram(32vh, 40px, $green);
+        @include animate(200ms);
       }
     }
   }
 
   /*Grid*/
   .grid {
-    /*Horizontal, 'across' grid lines*/
-    .cs1 {
-      background: #545;
-      position: absolute;
-      width: 100vw;
-      height: .5vh;
-      bottom: 10%;
+    /*Horizontal lines ('lr', going left and right)*/
+    .lr1 {
+      @include parallelogram(1vh, 100vw, #545);
+      bottom: 0%;
     } 
+
+    .lr2 {
+      @include parallelogram(1vh, 100vw, #545);
+      bottom: 5%;
+    }
+
+    .lr3 {
+      @include parallelogram(1vh, 100vw, #545);
+      bottom: 10%;
+    }
+
+    /*Vertical lines ('ud' going up and down)*/
+    .ud1 {
+      @include parallelogram(40vh, 1vw, #545, #545);
+      left: 0%;
+    }
+
+    .ud2 {
+      @include parallelogram(40vh, 1vw, #545, #545);
+      left: 10%;
+    }
+
+/*    .ud3 {
+      @include parallelogram()
+    }*/
   }
 }
