@@ -2,6 +2,18 @@
 /*@import "bootstrap-sprockets";*/ /*Implements asset pipeline*/
 /*@import "bootstrap";*/
 
+/*Color variables*/
+$aqua:      #67E6EC;
+$blue:      #3d6bf9;
+$green:     #32cd32;
+$lime:      #bfff00;
+$peach:     #fd9475;
+$pink:      #ff00cc;
+$violet:    #8f00ff;
+$purple:    #bf00ff;
+$red:       #f93d6b;
+$teal:      #38e3c4;
+
 /*HOME*/
 /*The home view's two main partitions*/
 .hero-one {
@@ -18,16 +30,11 @@
 
 .hero-two {
   /*Background settings*/
-  background-color: #c9dbBc;
+  background-color: #3f0046;
   /*Hero two takes up remaining vertical space available on page*/
   height: 40vh;
 
   /*Mixins, variables, etc.*/
-  $pink:      #ff00cc;
-  $purple:    #7e44fa;
-  $turquoise: #67E6EC;
-  $green:     #39ff14;
-
   /*Represents a single bar of specified height, color, and animation speed*/
   @mixin parallelogram($bar-height, $bar-width ,$color1, $color2: transparent) {
     /*Ensure bar height does not pass the nav links*/
@@ -51,11 +58,11 @@
   /*Keyframes for bounce animation; alters height like sound bars*/
   @keyframes bounce {
     0% {
-      height: 25vh;
+      height: 33.5vh;
     }
 
     100% {
-      height: 35vh;
+      height: 34vh;
     }
   }
 
@@ -72,9 +79,6 @@
 
   /*Navigaiton links*/
   .links {
-    font-family: 'Open Sans', helvetica, arial, sans;
-    font-size: 3vh;
-    font-weight: bold;
     /*Spaces words out to take up whole line*/
     display: flex;
     justify-content: space-between;
@@ -90,66 +94,126 @@
         /*Remove traditional link style*/
         text-decoration: none;
 
+        color: $peach;
+        font-family: 'Open Sans', helvetica, arial, sans;
+        font-size: 3vh;
+        font-weight: bold;
         /*Links change color when hovered over*/
         &:hover,
         &:active {
           color: $purple;
         }
       }
-
+      /*Animated bars that go right under the navigation lins*/
       .bar1 {
-        @include parallelogram(20vh, 40px, $purple);
-        @include animate(50ms);
+        @include parallelogram(20vh, 40px, $purple, $violet);
+        @include animate();
       }
 
       .bar2 {
-        @include parallelogram(29vh, 40px, $turquoise);
+        @include parallelogram(29vh, 40px, $blue, $aqua);
         @include animate(150ms);
       }
 
       .bar3 {
-        @include parallelogram(25vh, 40px, $pink);
-        @include animate(0ms);
+        @include parallelogram(25vh, 40px, $pink, $peach);
+        @include animate();
       }
 
       .bar4 {
-        @include parallelogram(32vh, 40px, $green);
+        @include parallelogram(32vh, 40px, $green, $lime);
         @include animate(200ms);
       }
     }
   }
+/*  @keyframes test {
+    0%  {perspective:  0.5vh;}
+    50% {perspective:  50vh;}
+    100% {perspective: 100vh;}
+  }
+  animation-name: test;
+  animation-duration: 5s;
+  animation-iteration-count: infinite;*/
+
+  perspective: 10vh;
+  overflow: hidden;
 
   /*Grid*/
   .grid {
     /*Horizontal lines ('lr', going left and right)*/
+    /*Set grid at an angle to see a horizon from hero two's perspective*/
+    transform: rotateX(10deg);
+    /*perspective: 0.1vh;*/
+
     .lr1 {
-      @include parallelogram(1vh, 100vw, #545);
-      bottom: 0%;
+      @include parallelogram(1vh, 100vw, $teal, $teal);
+      transform: translate(0vw, 0vh);
     } 
-
     .lr2 {
-      @include parallelogram(1vh, 100vw, #545);
-      bottom: 5%;
+      @include parallelogram(1vh, 100vw, $teal);
+      transform: translate(0vw, 5vh);
     }
-
     .lr3 {
-      @include parallelogram(1vh, 100vw, #545);
-      bottom: 10%;
+      @include parallelogram(1vh, 100vw, $teal);
+      transform: translate(0vw, 10vh);
     }
+    .lr4 {
+      @include parallelogram(1vh, 100vw, $teal);
+      transform: translate(0vw, 15vh);
+    }
+    .lr5 {
+      @include parallelogram(1vh, 100vw, $teal);
+      transform: translate(0vw, 20vh);
+    }
+    .lr6 {
+      @include parallelogram(1vh, 100vw, $teal);
+      transform: translate(0vw, 25vh);
+    }
+    .lr7 {
+      @include parallelogram(1vh, 100vw, $teal);
+      transform: translate(0vw, 30vh);
+    }    
 
     /*Vertical lines ('ud' going up and down)*/
     .ud1 {
-      @include parallelogram(40vh, 1vw, #545, #545);
-      left: 0%;
+      @include parallelogram(40vh, 1vw, $teal);
+      transform: translate(0vw, 40vh);
     }
-
     .ud2 {
-      @include parallelogram(40vh, 1vw, #545, #545);
-      left: 10%;
+      @include parallelogram(40vh, 1vw, $teal);
+      transform: translate(10vw, 40vh);
     }
-
-/*    .ud3 {
-      @include parallelogram()
-    }*/
+    .ud3 {
+      @include parallelogram(40vh, 1vw, $teal);
+      transform: translate(20vw, 40vh);
+    }
+    .ud4 {
+      @include parallelogram(40vh, 1vw, $teal);
+      transform: translate(30vw, 40vh);
+    }
+    .ud5 {
+      @include parallelogram(40vh, 1vw, $teal);
+      transform: translate(40vw, 40vh);
+    }
+    .ud6 {
+      @include parallelogram(40vh, 1vw, $teal);
+      transform: translate(50vw, 40vh);
+    }
+    .ud7 {
+      @include parallelogram(40vh, 1vw, $teal);
+      transform: translate(60vw, 40vh);
+    }
+    .ud8 {
+      @include parallelogram(40vh, 1vw, $teal);
+      transform: translate(70vw, 40vh);
+    }
+    .ud9 {
+      @include parallelogram(40vh, 1vw, $teal);
+      transform: translate(80vw, 40vh);
+    }
+    .ud10 {
+      @include parallelogram(40vh, 1vw, $teal);
+      transform: translate(90vw, 40vh);
+    }
   }
 }
