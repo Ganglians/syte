@@ -1,7 +1,4 @@
-/*Including this framework because it makes site responsive*/
-/*@import "bootstrap-sprockets";*/ /*Implements asset pipeline*/
-/*@import "bootstrap";*/
-
+/*Mixins, variables, etc.*/
 /*Color variables*/
 $aqua:      #67E6EC;
 $blue:      #3d6bf9;
@@ -14,11 +11,48 @@ $purple:    #bf00ff;
 $red:       #f93d6b;
 $teal:      #38e3c4;
 
+/*Represents a single bar of specified height, color, and animation speed*/
+@mixin parallelogram($bar-height, $bar-width, $color1, $color2: transparent) {
+  width: $bar-width;
+  height: $bar-height;
+  
+  /*Remove bar from normal doc. flow. move to starting point (top left)
+  of non-static parent. Make it start at bottom of said parent. Defaults 
+  to html tag if no other parent is removed from normal doc flow */
+  position: absolute;
+
+  /*Make bars gradiate to trapsparency*/
+  background: linear-gradient(to top, $color1, $color2);
+}
+
+/*Keyframes for bounce animation; alters height like sound bars*/
+@keyframes bounce {
+  0% {
+    /*top: 0.5vh;*/
+    height: 10vh;
+  }
+  100% {
+    /*height: 14vh;*/
+    /*top: 1vh;*/
+    height: 10.5vh;
+  }
+}
+
+@mixin animate($bar-delay: 0ms) {
+  /*Bind bounce animation for bars*/
+  animation-name: bounce;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-play-state: running;
+  animation-duration: 444ms;
+  animation-delay: $bar-delay;
+  animation-direction: alternate;
+}
 /*HOME*/
-/*The home view's two main partitions*/
+/*The home view's three partitions*/
 .hero-one {
-  background-color: #c7dbfc;
-  height: 60vh;
+  background-color: #77dd77;
+  height: 45vh;
 
   h1 {
     font-family: 'Open Sans', helvetica, arial, sans;
@@ -31,60 +65,25 @@ $teal:      #38e3c4;
 .hero-two {
   /*Background settings*/
   background-color: #3f0046;
-  /*Hero two takes up remaining vertical space available on page*/
-  height: 40vh;
-
-  /*Mixins, variables, etc.*/
-  /*Represents a single bar of specified height, color, and animation speed*/
-  @mixin parallelogram($bar-height, $bar-width ,$color1, $color2: transparent) {
-    /*Ensure bar height does not pass the nav links*/
-    /*max-height: 35vh;*/
-    /*width: 40px;*/
-    width: $bar-width;
-    /*Arbitrary height as a base for now*/
-    height: $bar-height;
-    
-    /*Remove bar from normal doc. flow. move to starting point (top left)
-    of non-static parent. Make it start at bottom of said parent. Defaults 
-    to html tag in this case */
-    position: absolute;
-    bottom: 0;
-
-    /*Make bars gradiate to trapsparency*/
-    background: linear-gradient(to top, $color1, $color2);
-    /*background: #545;*/
-  }
-
-  /*Keyframes for bounce animation; alters height like sound bars*/
-  @keyframes bounce {
-    0% {
-      height: 33.5vh;
-    }
-
-    100% {
-      height: 34vh;
-    }
-  }
-
-  @mixin animate($bar-delay: 0ms) {
-    /*Bind bounce animation for bars*/
-    animation-name: bounce;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-    animation-play-state: running;
-    animation-duration: 444ms;
-    animation-delay: $bar-delay;
-    animation-direction: alternate;
-  }
+  /*Makes entirety of hero two slightly transparent*/
+  opacity: 0.8;
+  /*Bar height*/
+  $bh: 10vh;
+  width: 100vw;
+  height: 20vh;
+  /*Ensure sound bars do not bleed into hero three*/
+  overflow: hidden;
+  /*Remove hero two from document flow. Takes as much space as needed or more
+  if specified. Space it used to take up below is taken over by hero three, 
+  which is fine since hero three is purely decorative (and the flexibility
+  opens up some interesting possibilities).*/
+  position: absolute;
 
   /*Navigaiton links*/
   .links {
-    /*Spaces words out to take up whole line*/
+    /*Spaces words out to take up whole width*/
     display: flex;
     justify-content: space-between;
-      /*Setting the height of links to 100% of it's parent '.hero-two', has 
-      no extra height otherwise*/
-      /*height: 100%;*/
 
     /*Links with bars*/
     li {
@@ -103,30 +102,46 @@ $teal:      #38e3c4;
         &:active {
           color: $purple;
         }
+
       }
       /*Animated bars that go right under the navigation lins*/
       .bar1 {
-        @include parallelogram(20vh, 40px, $purple, $violet);
+        @include parallelogram($bh, 40px, $violet, $purple);
+        /*Bar container has absolute position, separates section from list 
+        elements and allows them to grow from the bottom up by grounding bar1 element with 'bottom: 0' to closest parent not bound to flow (in this
+        case, hero two)*/
+        position: absolute;
+        bottom: 0;
         @include animate();
       }
 
       .bar2 {
-        @include parallelogram(29vh, 40px, $blue, $aqua);
+        @include parallelogram($bh, 40px, $blue, $aqua);
+        position: absolute;
+        bottom: 0;
         @include animate(150ms);
       }
 
       .bar3 {
-        @include parallelogram(25vh, 40px, $pink, $peach);
+        @include parallelogram($bh, 40px, $pink, $peach);
+        position: absolute;
+        bottom: 0;
         @include animate();
       }
 
       .bar4 {
-        @include parallelogram(32vh, 40px, $green, $lime);
+        @include parallelogram($bh, 40px, $green, $lime);
+        position: absolute;
+        bottom: 0;
         @include animate(200ms);
       }
     }
   }
-/*  @keyframes test {
+}
+
+.hero-three {
+  /* Used to test different values for grid simultaneously*/
+  /*  @keyframes test {
     0%  {perspective:  0.5vh;}
     50% {perspective:  50vh;}
     100% {perspective: 100vh;}
@@ -134,86 +149,116 @@ $teal:      #38e3c4;
   animation-name: test;
   animation-duration: 5s;
   animation-iteration-count: infinite;*/
+  /*Hero height*/
 
-  perspective: 10vh;
-  overflow: hidden;
+  $hh: 65vh;
+  /*background-color: #3f0046;*/
+  background-color: #c7dbfc;
+  /*Hero three takes up remaining vertical space available on page*/
+  height: $hh;
+  /*perspective: 4vh;*/
+
+  /*TODO: ENABLE AT END, LEAVE OUT FOR OBSERVATION WHEN EDITING*/
+  /*overflow: hidden;*/
+
+  display: flex;
 
   /*Grid*/
   .grid {
     /*Horizontal lines ('lr', going left and right)*/
     /*Set grid at an angle to see a horizon from hero two's perspective*/
-    transform: rotateX(10deg);
-    /*perspective: 0.1vh;*/
+    /*transform: rotateX(0.5deg);*/
+    /*perspective: 10vh;*/
 
     .lr1 {
-      @include parallelogram(1vh, 100vw, $teal, $teal);
-      transform: translate(0vw, 0vh);
+      @include parallelogram(2vh, 100vw, $teal);
+      /*transform: translate(0vw, 0vh);*/
+      /*top: 0%;*/
+      position: absolute;
+      bottom: 0%;
     } 
     .lr2 {
-      @include parallelogram(1vh, 100vw, $teal);
-      transform: translate(0vw, 5vh);
+      @include parallelogram(0.5vh, 100vw, $teal);
+      /*transform: translate(0vw, 5vh);*/
+      position: absolute;
+      bottom: 5%;
     }
     .lr3 {
-      @include parallelogram(1vh, 100vw, $teal);
-      transform: translate(0vw, 10vh);
+      @include parallelogram(0.5vh, 100vw, $teal);
+      /*transform: translate(0vw, 10vh);*/
+      position: absolute;
+      bottom: 10%;
     }
     .lr4 {
-      @include parallelogram(1vh, 100vw, $teal);
-      transform: translate(0vw, 15vh);
+      @include parallelogram(0.5vh, 100vw, $teal);
+      /*transform: translate(0vw, 15vh);*/
+      position: absolute;
+      bottom: 15%;
     }
     .lr5 {
-      @include parallelogram(1vh, 100vw, $teal);
-      transform: translate(0vw, 20vh);
+      @include parallelogram(0.5vh, 100vw, $teal);
+      /*transform: translate(0vw, 20vh);*/
+      position: absolute;
+      bottom: 20%;
     }
     .lr6 {
-      @include parallelogram(1vh, 100vw, $teal);
-      transform: translate(0vw, 25vh);
+      @include parallelogram(0.5vh, 100vw, $teal);
+      /*transform: translate(0vw, 25vh);*/
+      position: absolute;
+      bottom: 25%;
     }
     .lr7 {
-      @include parallelogram(1vh, 100vw, $teal);
-      transform: translate(0vw, 30vh);
+      @include parallelogram(0.5vh, 100vw, $teal);
+      /*transform: translate(0vw, 30vh);*/
+      position: absolute;
+      bottom: 30%;
     }    
 
     /*Vertical lines ('ud' going up and down)*/
     .ud1 {
-      @include parallelogram(40vh, 1vw, $teal);
-      transform: translate(0vw, 40vh);
+      @include parallelogram($hh, 0.5vw, $teal, $teal);
+      position: absolute;
+      /*transform: translate(0vw, 0vh);*/
+      bottom: 0%;
     }
     .ud2 {
-      @include parallelogram(40vh, 1vw, $teal);
-      transform: translate(10vw, 40vh);
+      @include parallelogram($hh, 1vw, $teal, $teal);
+      /*transform: translate(10vw, -40vh);*/
+      /*bottom: 10%;*/
+      top: -100%;
+      left: 10%;
     }
-    .ud3 {
-      @include parallelogram(40vh, 1vw, $teal);
-      transform: translate(20vw, 40vh);
+/*    .ud3 {
+      @include parallelogram($hh, 0.1vw, $teal, $teal);
+      transform: translate(20vw, -80vh);
     }
     .ud4 {
-      @include parallelogram(40vh, 1vw, $teal);
-      transform: translate(30vw, 40vh);
+      @include parallelogram($hh, 0.1vw, $teal, $teal);
+      transform: translate(30vw, -120vh);
     }
     .ud5 {
-      @include parallelogram(40vh, 1vw, $teal);
-      transform: translate(40vw, 40vh);
+      @include parallelogram($hh, 0.1vw, $teal, $teal);
+      transform: translate(40vw, -160vh);
     }
     .ud6 {
-      @include parallelogram(40vh, 1vw, $teal);
-      transform: translate(50vw, 40vh);
+      @include parallelogram($hh, 0.1vw, $teal, $teal);
+      transform: translate(50vw, -200vh);
     }
     .ud7 {
-      @include parallelogram(40vh, 1vw, $teal);
-      transform: translate(60vw, 40vh);
+      @include parallelogram($hh, 0.1vw, $teal, $teal);
+      transform: translate(60vw, -240vh);
     }
     .ud8 {
-      @include parallelogram(40vh, 1vw, $teal);
-      transform: translate(70vw, 40vh);
+      @include parallelogram($hh, 0.1vw, $teal, $teal);
+      transform: translate(70vw, -280vh);
     }
     .ud9 {
-      @include parallelogram(40vh, 1vw, $teal);
-      transform: translate(80vw, 40vh);
+      @include parallelogram($hh, 0.1vw, $teal, $teal);
+      transform: translate(80vw, -320vh);
     }
     .ud10 {
-      @include parallelogram(40vh, 1vw, $teal);
-      transform: translate(90vw, 40vh);
-    }
+      @include parallelogram($hh, 0.1vw, $teal, $teal);
+      transform: translate(90vw, -360vh);
+    }*/
   }
 }
