@@ -52,7 +52,7 @@ $teal:      #38e3c4;
 /*The home view's three partitions*/
 .hero-one {
   background-color: #77dd77;
-  height: 45vh;
+  height: 55vh;
 
   h1 {
     font-family: 'Open Sans', helvetica, arial, sans;
@@ -63,16 +63,20 @@ $teal:      #38e3c4;
 }
 
 .hero-two {
+  /*Allow visibility even when hero three changes perspective*/
+  z-index: 1;
   /*Background settings*/
-  background-color: #3f0046;
+  /*background-color: #c7dbfc;*/
+
+  /*Transparent background*/
+  background-color: rgba(0, 0, 0, 0);
   /*Makes entirety of hero two slightly transparent*/
   opacity: 0.8;
-  /*Bar height*/
-  $bh: 10vh;
+  /*Bar dimensions*/
+  $bh: 10vh; /*height*/
+  $bw: 6vw;  /*width*/
   width: 100vw;
   height: 20vh;
-  /*Ensure sound bars do not bleed into hero three*/
-  overflow: hidden;
   /*Remove hero two from document flow. Takes as much space as needed or more
   if specified. Space it used to take up below is taken over by hero three, 
   which is fine since hero three is purely decorative (and the flexibility
@@ -102,11 +106,13 @@ $teal:      #38e3c4;
         &:active {
           color: $purple;
         }
-
+        position: relative;
+        bottom: 4vh;
       }
+
       /*Animated bars that go right under the navigation lins*/
       .bar1 {
-        @include parallelogram($bh, 40px, $violet, $purple);
+        @include parallelogram($bh, $bw, $violet, $purple);
         /*Bar container has absolute position, separates section from list 
         elements and allows them to grow from the bottom up by grounding bar1 element with 'bottom: 0' to closest parent not bound to flow (in this
         case, hero two)*/
@@ -116,21 +122,21 @@ $teal:      #38e3c4;
       }
 
       .bar2 {
-        @include parallelogram($bh, 40px, $blue, $aqua);
+        @include parallelogram($bh, $bw, $blue, $aqua);
         position: absolute;
         bottom: 0;
         @include animate(150ms);
       }
 
       .bar3 {
-        @include parallelogram($bh, 40px, $pink, $peach);
+        @include parallelogram($bh, $bw, $pink, $peach);
         position: absolute;
         bottom: 0;
         @include animate();
       }
 
       .bar4 {
-        @include parallelogram($bh, 40px, $green, $lime);
+        @include parallelogram($bh, $bw, $green, $lime);
         position: absolute;
         bottom: 0;
         @include animate(200ms);
@@ -139,100 +145,94 @@ $teal:      #38e3c4;
   }
 }
 
-.hero-three {
-  /* Used to test different values for grid simultaneously*/
-  /*  @keyframes test {
-    0%  {perspective:  0.5vh;}
-    50% {perspective:  50vh;}
-    100% {perspective: 100vh;}
-  }
-  animation-name: test;
-  animation-duration: 5s;
-  animation-iteration-count: infinite;*/
-  /*Hero height*/
+:root{
+  overflow: hidden;
+}
 
-  $hh: 65vh;
-  /*background-color: #3f0046;*/
-  background-color: #c7dbfc;
+.hero-three {
+  /*Hero height*/
+  $hh: 45vh;
+  background-color: #3f0046;
   /*Hero three takes up remaining vertical space available on page*/
   height: $hh;
-  /*perspective: 4vh;*/
+  /*perspective: 10vh;*/
 
   /*TODO: ENABLE AT END, LEAVE OUT FOR OBSERVATION WHEN EDITING*/
   /*overflow: hidden;*/
-
-  display: flex;
+  /*display: flex;*/
 
   /*Grid*/
   .grid {
-    /*Horizontal lines ('lr', going left and right)*/
-    /*Set grid at an angle to see a horizon from hero two's perspective*/
-    /*transform: rotateX(0.5deg);*/
+    /*perspective: 0.3vh;*/
+    /*Create illusion of grid horizon*/
+    transform: rotateX(10deg);
     /*perspective: 10vh;*/
+    /*Make lines start from top down (since lines are also absolutely 
+    positioned, their point of reference is the closest parent removed from 
+    document flow, meaning they will flow downwards from this parent, grid)*/
+    position: absolute;
 
+    /*Horizontal lines ('lr', going left and right)*/
     .lr1 {
-      @include parallelogram(2vh, 100vw, $teal);
-      /*transform: translate(0vw, 0vh);*/
-      /*top: 0%;*/
+      @include parallelogram(0.5vh, 100vw, $pink);
+      transform: translate(0vw, 20vh);
       position: absolute;
-      bottom: 0%;
     } 
     .lr2 {
-      @include parallelogram(0.5vh, 100vw, $teal);
-      /*transform: translate(0vw, 5vh);*/
+      @include parallelogram(0.5vh, 100vw, $peach);
+      transform: translate(0vw, 50vh);
       position: absolute;
-      bottom: 5%;
     }
     .lr3 {
       @include parallelogram(0.5vh, 100vw, $teal);
-      /*transform: translate(0vw, 10vh);*/
+      transform: translate(0vw, 59vh);
       position: absolute;
-      bottom: 10%;
     }
-    .lr4 {
+/*    .lr4 {
       @include parallelogram(0.5vh, 100vw, $teal);
-      /*transform: translate(0vw, 15vh);*/
+      transform: translate(0vw, 15vh);
       position: absolute;
       bottom: 15%;
-    }
-    .lr5 {
+    }*/
+/*    .lr5 {
       @include parallelogram(0.5vh, 100vw, $teal);
-      /*transform: translate(0vw, 20vh);*/
+      transform: translate(0vw, 20vh);
       position: absolute;
       bottom: 20%;
-    }
-    .lr6 {
+    }*/
+/*    .lr6 {
       @include parallelogram(0.5vh, 100vw, $teal);
-      /*transform: translate(0vw, 25vh);*/
+      transform: translate(0vw, 25vh);
       position: absolute;
       bottom: 25%;
-    }
-    .lr7 {
-      @include parallelogram(0.5vh, 100vw, $teal);
-      /*transform: translate(0vw, 30vh);*/
+    }*/
+/*    .lr7 {
+      @include parallelogram(0.5vh, 100vw, $blue);
+      transform: translate(0vw, 30vh);
       position: absolute;
       bottom: 30%;
-    }    
+    } */   
 
     /*Vertical lines ('ud' going up and down)*/
     .ud1 {
-      @include parallelogram($hh, 0.5vw, $teal, $teal);
+      @include parallelogram($hh, 0.5vh, $teal, $purple);
       position: absolute;
-      /*transform: translate(0vw, 0vh);*/
-      bottom: 0%;
-    }
-    .ud2 {
-      @include parallelogram($hh, 1vw, $teal, $teal);
-      /*transform: translate(10vw, -40vh);*/
-      /*bottom: 10%;*/
-      top: -100%;
+      transform: translate(0vw, 0vh)
+                 rotateZ(25deg);
       left: 10%;
     }
-/*    .ud3 {
-      @include parallelogram($hh, 0.1vw, $teal, $teal);
-      transform: translate(20vw, -80vh);
+    .ud2 {
+      @include parallelogram($hh, 0.5vh, $teal, $peach);
+      position: absolute;
+      transform: translate(50vw, 0vh);
     }
-    .ud4 {
+    .ud3 {
+      @include parallelogram($hh, 0.5vh, $teal, $teal);
+      position: absolute;
+      transform: translate(100vw, 0vh)
+                 rotateZ(-25deg);
+    }
+/*    .ud4 {
       @include parallelogram($hh, 0.1vw, $teal, $teal);
       transform: translate(30vw, -120vh);
     }
