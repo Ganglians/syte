@@ -162,112 +162,116 @@ $teal:      #38e3c4;
     /*Create illusion of grid horizon*/
     transform: rotateX(45deg);
 
-    /*Horizontal lines ('lr', going left and right)*/
-    .lr1 {
-      @include parallelogram($lt, 100vw, $teal, transparent);
-      top: 45%;
-      position: absolute;
-    } 
-    .lr2 {
-      @include parallelogram($lt, 100vw, $teal, transparent);
-      top: 55%;
-      position: absolute;
+    .horizontal-gridlines {
+      /*Horizontal lines ('lr', going left and right)*/
+      div:nth-of-type(1) {
+        @include parallelogram($lt, 100vw, $teal, transparent);
+        top: 45%;
+        position: absolute;
+      }
+      div:nth-of-type(2) {
+        @include parallelogram($lt, 100vw, $teal, transparent);
+        top: 50%;
+        position: absolute;
+      }
+      div:nth-of-type(3) {
+        @include parallelogram($lt, 100vw, $teal, transparent);
+        top: 65%;
+        position: absolute;
+      }
+      div:nth-of-type(4) {
+        @include parallelogram($lt, 100vw, $teal, transparent);
+        top: 70%;
+        position: absolute;
+      }
+  /*    .lr5 {
+        @include parallelogram(0.5vh, 100vw, $teal);
+        transform: translate(0vw, 20vh);
+        position: absolute;
+        bottom: 20%;
+      }*/
+  /*    .lr6 {
+        @include parallelogram(0.5vh, 100vw, $teal);
+        transform: translate(0vw, 25vh);
+        position: absolute;
+        bottom: 25%;
+      }*/
+  /*    .lr7 {
+        @include parallelogram(0.5vh, 100vw, $blue);
+        transform: translate(0vw, 30vh);
+        position: absolute;
+        bottom: 30%;
+      } */   
     }
-    .lr3 {
-      @include parallelogram($lt, 100vw, $teal, transparent);
-      top: 65%;
-      position: absolute;
-    }
-    .lr4 {
-      @include parallelogram($lt, 100vw, $teal, transparent);
-      top: 70%;
-      position: absolute;
-    }
-/*    .lr5 {
-      @include parallelogram(0.5vh, 100vw, $teal);
-      transform: translate(0vw, 20vh);
-      position: absolute;
-      bottom: 20%;
-    }*/
-/*    .lr6 {
-      @include parallelogram(0.5vh, 100vw, $teal);
-      transform: translate(0vw, 25vh);
-      position: absolute;
-      bottom: 25%;
-    }*/
-/*    .lr7 {
-      @include parallelogram(0.5vh, 100vw, $blue);
-      transform: translate(0vw, 30vh);
-      position: absolute;
-      bottom: 30%;
-    } */   
 
     /*Vertical lines ('ud' going up and down)*/
-    .ud0 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 0%;
-      bottom: -20vh;
-    }
-    .ud1 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 10%;
-      bottom: -20vh;
-    }
-    .ud2 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 20%;
-      bottom: -20vh;
-    }
-    .ud3 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 30%;
-      bottom: -20vh;
-    }
-    .ud4 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 40%;
-      bottom: -20vh;
-    }
-    .ud5 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 50%;
-      bottom: -20vh; /*downward shift, line doesn't extend all the way*/
-    }
-    .ud6 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 60%;
-      bottom: -20vh;
-    }
-    .ud7 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 70%;
-      bottom: -20vh;
-    }
-    .ud8 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 80%;
-      bottom: -20vh;
-    }
-    .ud9 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 90%;
-      bottom: -20vh;
-    }
-    .ud10 {
-      @include parallelogram($lh, $lt, $teal, $teal);
-      position: absolute;
-      left: 100%;
-      bottom: -20vh;
+    .vertical-gridlines {
+      div:nth-of-type(1) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 0%;
+        bottom: -20vh;
+      }
+      div:nth-of-type(2) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 10%;
+        bottom: -20vh;
+      }
+      div:nth-of-type(3) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 20%;
+        bottom: -20vh;
+      }
+      div:nth-of-type(4) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 30%;
+        bottom: -20vh;
+      }
+      div:nth-of-type(5) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 40%;
+        bottom: -20vh;
+      }
+      div:nth-of-type(6) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 50%;
+        bottom: -20vh; /*downward shift, line doesn't extend all the way*/
+      }
+      div:nth-of-type(7) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 60%;
+        bottom: -20vh;
+      }
+      div:nth-of-type(8) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 70%;
+        bottom: -20vh;
+      }
+      div:nth-of-type(9) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 80%;
+        bottom: -20vh;
+      }
+      div:nth-of-type(10) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 90%;
+        bottom: -20vh;
+      }
+      div:nth-of-type(11) {
+        @include parallelogram($lh, $lt, $teal, $teal);
+        position: absolute;
+        left: 100%;
+        bottom: -20vh;
+      }
     }
   }
 }
