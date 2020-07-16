@@ -28,17 +28,21 @@ $teal:      #38e3c4;
 /*Keyframes for bounce animation; alters height like sound bars*/
 @keyframes bounce {
   0% {
-    /*top: 0.5vh;*/
-    height: 10vh;
+    height: 14vh;
   }
   100% {
-    /*height: 14vh;*/
-    /*top: 1vh;*/
-    height: 10.5vh;
+    height: 14.5vh;
   }
 }
 
-@mixin animate($bar-delay: 0ms) {
+/*Set up soundbar positioning and animation, can take an animation delay 
+argument*/
+@mixin bar-properties($bar-delay: 0ms) {
+  /*Aesthetic only*/
+  opacity: 0.65;
+  /*Bar positioning*/
+  position: absolute;
+  bottom: 0;
   /*Bind bounce animation for bars*/
   animation-name: bounce;
   animation-timing-function: ease-in-out;
@@ -48,6 +52,7 @@ $teal:      #38e3c4;
   animation-delay: $bar-delay;
   animation-direction: alternate;
 }
+
 /*HOME*/
 /*The home view's three partitions*/
 .hero-one {
@@ -59,20 +64,19 @@ $teal:      #38e3c4;
     font-size: 5rem;   
     padding: 10vh;
     text-align: center;
+
   }
 }
-
 .hero-two {
   /*Allow visibility even when hero three changes perspective*/
   z-index: 1;
+  /*Transparent background*/
   background-color: rgba(0, 0, 0, 0);
-  /*Makes entirety of hero two slightly transparent*/
-  opacity: 0.8;
-  /*hero/section dimensions*/
+  /*hero section dimensions*/
   width: 100vw;
   height: 20vh;
   /*Bar dimensions*/
-  $bh: 10vh; /*height*/
+  $bh: 14vh; /*height*/
   $bw: 6vw;  /*width*/
   /*Remove hero two from document flow. Can Take as much space as needed or more
   if specified. Space it used to take up below is taken over by hero three, 
@@ -106,37 +110,26 @@ $teal:      #38e3c4;
         position: relative;
         bottom: 4vh;
       }
-
       /*Animated bars that go right under the navigation lins*/
       .bar1 {
         @include parallelogram($bh, $bw, $violet, $purple);
         /*Bar container has absolute position, separates section from list 
-        elements and allows them to grow from the bottom up by grounding bar1 element with 'bottom: 0' to closest parent not bound to flow (in this
+        elements and allows them to grow from the bottom up by grounding bar1 
+        element with 'bottom: 0' to closest parent not bound to flow (in this
         case, hero two)*/
-        position: absolute;
-        bottom: 0;
-        @include animate();
+        @include bar-properties;
       }
-
       .bar2 {
         @include parallelogram($bh, $bw, $blue, $aqua);
-        position: absolute;
-        bottom: 0;
-        @include animate(150ms);
+        @include bar-properties(150ms);
       }
-
       .bar3 {
         @include parallelogram($bh, $bw, $pink, $peach);
-        position: absolute;
-        bottom: 0;
-        @include animate();
+        @include bar-properties;
       }
-
       .bar4 {
         @include parallelogram($bh, $bw, $green, $lime);
-        position: absolute;
-        bottom: 0;
-        @include animate(200ms);
+        @include bar-properties(200ms);
       }
     }
   }
@@ -147,16 +140,19 @@ $teal:      #38e3c4;
   $hh: 45vh;
   /*Hero three takes up remaining vertical space available on page*/
   height: $hh;
-  background-color: #3f0046;
+  /*background: linear-gradient(to top, $color1, $color2);*/
+  /*background-color: #3f0046;*/
+  background: linear-gradient(to top, $pink, #3f0046);
   /*Give depth to rotated grid, see it from 10vh above*/
   perspective: 10vh;
+
   /*overflow: hidden;*/
   .grid {
     /*Ensure grid covers lines in their entirety, even when grid rotates*/
     width: 100%;
     height: 100%;
     /*Line thickness*/
-    $lt: 0.8vh;
+    $lt: 0.7vh;
     /*Line height (for ud lines)*/
     $lh: 45vh;
     /*Create illusion of grid horizon*/
@@ -166,42 +162,39 @@ $teal:      #38e3c4;
       /*Horizontal lines ('lr', going left and right)*/
       div:nth-of-type(1) {
         @include parallelogram($lt, 100vw, $teal, transparent);
-        top: 45%;
+        top: 40%;
         position: absolute;
-      }
+      }      
       div:nth-of-type(2) {
         @include parallelogram($lt, 100vw, $teal, transparent);
-        top: 50%;
+        top: 45%;
         position: absolute;
       }
       div:nth-of-type(3) {
         @include parallelogram($lt, 100vw, $teal, transparent);
-        top: 65%;
+        top: 50%;
         position: absolute;
       }
       div:nth-of-type(4) {
         @include parallelogram($lt, 100vw, $teal, transparent);
-        top: 70%;
+        top: 55%;
         position: absolute;
       }
-  /*    .lr5 {
-        @include parallelogram(0.5vh, 100vw, $teal);
-        transform: translate(0vw, 20vh);
+      div:nth-of-type(5) {
+        @include parallelogram($lt, 100vw, $teal, transparent);
+        top: 60%;
         position: absolute;
-        bottom: 20%;
-      }*/
-  /*    .lr6 {
-        @include parallelogram(0.5vh, 100vw, $teal);
-        transform: translate(0vw, 25vh);
-        position: absolute;
-        bottom: 25%;
-      }*/
-  /*    .lr7 {
-        @include parallelogram(0.5vh, 100vw, $blue);
-        transform: translate(0vw, 30vh);
-        position: absolute;
-        bottom: 30%;
-      } */   
+      }
+      div:nth-of-type(6) {
+        @include parallelogram($lt, 100vw, $teal, transparent);
+        top: 65%;
+        position: absolute;        
+      }
+      div:nth-of-type(7) {
+        @include parallelogram($lt, 100vw, $teal, transparent);
+        top: 70%;
+        position: absolute;        
+      }
     }
 
     /*Vertical lines ('ud' going up and down)*/
@@ -209,68 +202,70 @@ $teal:      #38e3c4;
       div:nth-of-type(1) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
+        /*background: linear-gradient(to left, $teal, transparent);*/
         left: 0%;
-        bottom: -20vh;
+        bottom: -19vh;
       }
       div:nth-of-type(2) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
         left: 10%;
-        bottom: -20vh;
+        bottom: -19vh;
       }
       div:nth-of-type(3) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
         left: 20%;
-        bottom: -20vh;
+        bottom: -19vh;
       }
       div:nth-of-type(4) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
         left: 30%;
-        bottom: -20vh;
+        bottom: -19vh;
       }
       div:nth-of-type(5) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
+        /*background: linear-gradient(to left, $teal, transparent);*/
         left: 40%;
-        bottom: -20vh;
+        bottom: -19vh;
       }
       div:nth-of-type(6) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
         left: 50%;
-        bottom: -20vh; /*downward shift, line doesn't extend all the way*/
+        bottom: -19vh; /*downward shift, line doesn't extend all the way*/
       }
       div:nth-of-type(7) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
         left: 60%;
-        bottom: -20vh;
+        bottom: -19vh;
       }
       div:nth-of-type(8) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
         left: 70%;
-        bottom: -20vh;
+        bottom: -19vh;
       }
       div:nth-of-type(9) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
         left: 80%;
-        bottom: -20vh;
+        bottom: -19vh;
       }
       div:nth-of-type(10) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
         left: 90%;
-        bottom: -20vh;
+        bottom: -19vh;
       }
       div:nth-of-type(11) {
         @include parallelogram($lh, $lt, $teal, $teal);
         position: absolute;
         left: 100%;
-        bottom: -20vh;
+        bottom: -19vh;
       }
     }
   }
