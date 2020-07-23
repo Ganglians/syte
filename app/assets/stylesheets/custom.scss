@@ -1,3 +1,5 @@
+/*Home page's styling*/
+.home {
 /*Mixins, variables, etc.*/
 /*Color variables*/
 $aqua:      #35FBFC;
@@ -14,13 +16,10 @@ $teal:      #38e3c4;
 $onyx:      #0f0f0f;
 
 /*The color that both hero-one and hero-three have as a gradient transition*/
-/*$mid-color: $peach;*/
 $mid-color: #666699;
 /*$mid-color: #000000;*/
-
-/*div {
-  display: block;
-}*/
+/*height: 100vh;*/
+background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
 
 /*Represents a single bar of specified height, color, and animation speed*/
 @mixin parallelogram($bar-height, $bar-width, $color1, $color2: transparent) {
@@ -32,15 +31,12 @@ $mid-color: #666699;
   to html tag if no other parent is removed from normal doc flow */
   position: absolute;
 
-  /*Make bars gradiate to trapsparency*/
   background: linear-gradient(to top, $color1, $color2);
 }
 
 /*HOME*/
 /*The home view's three partitions*/
 .hero-one {
-  /*background-color: #194cbf;*/
-  background: linear-gradient(to top, $mid-color, #000000);
   height: 55vh;
 
   h1 {
@@ -58,6 +54,7 @@ $mid-color: #666699;
     margin-right: auto;
   }
 }
+
 .hero-two {
   /*Allow visibility even when hero three changes perspective*/
   z-index: 1;
@@ -66,9 +63,6 @@ $mid-color: #666699;
   /*hero section dimensions*/
   width: 100vw;
   height: 20vh;
-  /*Bar dimensions*/
-  $bh: 14vh; /*height*/
-  $bw: 4vw;  /*width*/
   /*Remove hero two from document flow. Can Take as much space as needed or more
   if specified. Space it used to take up below is taken over by hero three, 
   which is fine since hero three is purely decorative (and the flexibility
@@ -115,6 +109,9 @@ $mid-color: #666699;
     /*Links with bars*/
     li {
       list-style: none;
+      /*Bar dimensions*/
+      $bh: 14vh; /*height*/
+      $bw: 4vw;  /*width*/
 
       a {
         /*Remove traditional link style*/
@@ -140,35 +137,37 @@ $mid-color: #666699;
         element with 'bottom: 0' to closest parent not bound to flow (in this
         case, hero two)*/
         @include bar-properties(#cc00ff);
-        opacity: 0.80;
+        /*Placeholder (make bars less bright later)*/
+        opacity: 0.70;
       }
       .bar2 {
         @include parallelogram($bh, $bw, #00ff99, #00ffcc);
         @include bar-properties(#00ffcc, 150ms);
-        opacity: 0.80;
+        /*Placeholder (make bars less bright later)*/
+        opacity: 0.70;
       }
       .bar3 {
         @include parallelogram($bh, $bw, $pink, #ff66ff);
         @include bar-properties(#ff66ff);
-        opacity: 0.80;
+        /*Placeholder (make bars less bright later)*/
+        opacity: 0.70;
       }
       .bar4 {
         @include parallelogram($bh, $bw, #99ffcc, #99ffff);
         @include bar-properties(#99ffff, 200ms);
-        opacity: 0.80;
+        /*Placeholder (make bars less bright later)*/
+        opacity: 0.70;
       }
     }
   }
 }
 
 .hero-three {
-  /*Hero height*/
+  /*Hero height, not needed but put here for clarity*/
   $hh: 45vh;
   /*Hero three takes up remaining vertical space available on page*/
   height: $hh;
-  /*background: linear-gradient(to top, $color1, $color2);*/
-  /*background-color: #3f0046;*/
-  background: linear-gradient(to top, #071957 -15vh, $mid-color);
+  overflow: hidden;
 
   /*Grid plane that contains the grid within it*/
   .horizontal-horizon {
@@ -180,11 +179,10 @@ $mid-color: #666699;
     /*Bring horizontal horizon line to the front of bars for a smooth 
     transition*/
     z-index: 1;
-    opacity: 0.9;
+    opacity: 0.5;
   }
   .plane {
-    /*Assign same height as parent to position everything as if working in hero 
-    three*/
+    /*Assign same height as parent to position everything as if working in hero three*/
     /*position: absolute;*/
     height: 45vh;
     /*Set a perspective from where to observe the transformed grid*/
@@ -200,113 +198,91 @@ $mid-color: #666699;
       $lt: 0.7vh;
       /*Line height (for ud lines)*/
       $lh: 45vh;
+      opacity: 0.5;
       /*Create illusion of grid horizon*/
       transform: rotateX(45deg);
 
       .horizontal-gridlines {    
         div:nth-of-type(1) {
           @include parallelogram($lt, 100vw, $aqua, transparent);
+          /*box-shadow: 0vw -0.10vh 10px 0.3vh $aqua, 0vw 0.10vh 10px -0.3vh $aqua;*/
           top: 45%;
-          /*position: absolute;*/
         }
         div:nth-of-type(2) {
           @include parallelogram($lt, 100vw, $aqua, transparent);
           top: 50%;
-          /*position: absolute;*/
         }
         div:nth-of-type(3) {
           @include parallelogram($lt, 100vw, $aqua, transparent);
           top: 55%;
-          /*position: absolute;*/
         }
         div:nth-of-type(4) {
           @include parallelogram($lt, 100vw, $aqua, transparent);
           top: 60%;
-          /*position: absolute;*/
         }
         div:nth-of-type(5) {
           @include parallelogram($lt, 100vw, $aqua, transparent);
           top: 65%;
-          /*position: absolute;        */
         }
         div:nth-of-type(6) {
           @include parallelogram($lt, 100vw, $aqua, transparent);
           top: 70%;
-          /*position: absolute;        */
         }
       }
 
       /*Vertical lines ('ud' going up and down)*/
       .vertical-gridlines {
+        position: relative;
+        bottom: -18vh;
         div:nth-of-type(1) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
           /*position: absolute;*/
           /*background: linear-gradient(to left, $aqua, transparent);*/
           left: 0%;
-          bottom: -19vh;
         }
         div:nth-of-type(2) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
-          /*position: absolute;*/
           left: 10%;
-          bottom: -19vh;
         }
         div:nth-of-type(3) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
-          /*position: absolute;*/
           left: 20%;
-          bottom: -19vh;
         }
         div:nth-of-type(4) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
-          /*position: absolute;*/
           left: 30%;
-          bottom: -19vh;
         }
         div:nth-of-type(5) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
-          /*position: absolute;*/
           /*background: linear-gradient(to left, $aqua, transparent);*/
           left: 40%;
-          bottom: -19vh;
         }
         div:nth-of-type(6) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
-          /*position: absolute;*/
           left: 50%;
-          bottom: -19vh; /*downward shift, line doesn't extend all the way*/
         }
         div:nth-of-type(7) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
-          /*position: absolute;*/
           left: 60%;
-          bottom: -19vh;
         }
         div:nth-of-type(8) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
-          /*position: absolute;*/
           left: 70%;
-          bottom: -19vh;
         }
         div:nth-of-type(9) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
-          /*position: absolute;*/
           left: 80%;
-          bottom: -19vh;
         }
         div:nth-of-type(10) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
-          /*position: absolute;*/
           left: 90%;
-          bottom: -19vh;
         }
         div:nth-of-type(11) {
           @include parallelogram($lh, $lt, $aqua, $aqua);
-          /*position: absolute;*/
           left: 100%;
-          bottom: -19vh;
         }
       } /* .vertical-gridlines END */
     } /* .grid END */ 
   } /* .plane END */
+}
 }
