@@ -50,6 +50,7 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
     /*position: absolute;*/
     display: block;
     width: 30vw;
+    height: 25vh;
     margin-left: auto;
     margin-right: auto;
   }
@@ -118,7 +119,7 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
         text-decoration: none;
         color: $pink;
         font-family: 'Open Sans', helvetica, arial, sans;
-        font-size: 3.4vh;
+        font-size: 1em;
         font-weight: bold;
 
         /*Links change color when hovered over*/
@@ -129,7 +130,23 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
         position: relative;
         bottom: 4vh;
       }
-      /*Animated bars that go right under the navigation lins*/
+
+      /*img {*/
+        .icon {
+          /*display: block;*/
+          /*width: 40px;*/
+          /*height: 20px;*/
+          width: 3vw;
+          /*Default color*/
+          filter: invert(15%) sepia(94%) saturate(3967%) hue-rotate(305deg) brightness(111%) contrast(122%);
+
+          &:hover,
+          &:active {
+            filter: invert(14%) sepia(99%) saturate(4163%) hue-rotate(280deg) brightness(109%) contrast(123%);
+          }
+        }
+      /*}*/
+      /*Animated bars that go right under the navigation links*/
       .bar1 {
         @include parallelogram($bh, $bw, #9933ff, #cc00ff);
         /*Bar container has absolute position, separates section from list 
