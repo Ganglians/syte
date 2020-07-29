@@ -30,7 +30,6 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
   of non-static parent. Make it start at bottom of said parent. Defaults 
   to html tag if no other parent is removed from normal doc flow */
   position: absolute;
-
   background: linear-gradient(to top, $color1, $color2);
 }
 
@@ -61,6 +60,9 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
   z-index: 1;
   /*Transparent background*/
   background-color: rgba(0, 0, 0, 0);
+  background-image:url('sky.svg');
+  background-repeat: no-repeat;
+  background-size: 105vw 20vh;
   /*hero section dimensions*/
   width: 100vw;
   height: 20vh;
