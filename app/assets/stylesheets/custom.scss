@@ -65,7 +65,7 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
   background-size: 105vw 20vh;
   /*hero section dimensions*/
   width: 100vw;
-  height: 20vh;
+  height: 23vh;
   /*Remove hero two from document flow. Can Take as much space as needed or more
   if specified. Space it used to take up below is taken over by hero three, 
   which is fine since hero three is purely decorative (and the flexibility
@@ -197,7 +197,7 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
     box-shadow: 0vw -0.25vh 10px 0.3vh $aqua, 0vw 0.23vh 10px -0.3vh $aqua;
     /*Bring horizontal horizon line to the front of bars for a smooth 
     transition*/
-    z-index: 1;
+    z-index: 0;
     opacity: 0.5;
   }
   .plane {
