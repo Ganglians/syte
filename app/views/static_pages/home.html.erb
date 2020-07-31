@@ -1,10 +1,20 @@
 <!-- Page will display default title -->
 
+<!-- Game's javascript will be added here for the time being -->
+<script>
+  function gameStart() {
+    document.getElementById("demo").innerHTML = "Game start";
+  }
+</script>
+
 <!-- Page body -->
 <!-- This class differentiates home page in custom.scss -->
 <div class="home">
 <div class="hero-one">
     <img alt="Sun" src="syte_sun.svg" class="sun"/>
+    <!-- Button to start the game -->
+    <button type="button" onclick="gameStart()">Play</button>
+    <p id="demo"> JS Demonstration </p>
 </div>
 
 <div class="hero-two">
