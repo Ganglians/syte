@@ -1,7 +1,7 @@
-/*Home page's styling*/
+/*Home page's scss styling*/
 .home {
 /*Mixins, variables, etc.*/
-/*Color variables*/
+/*Colors*/
 $aqua:      #35FBFC;
 $blue:      #3d6bf9;
 $green:     #9ADAC0;
@@ -15,11 +15,10 @@ $red:       #f93d6b;
 $teal:      #38e3c4;
 $onyx:      #0f0f0f;
 
-/*The color that both hero-one and hero-three have as a gradient transition*/
+/*The color between transitions for home's background*/
 $mid-color: #666699;
-/*$mid-color: #000000;*/
 /*height: 100vh;*/
-background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
+background: linear-gradient(to top, #071957 -5vh, $mid-color, black);
 
 /*Represents a single bar of specified height, color, and animation speed*/
 @mixin parallelogram($bar-height, $bar-width, $color1, $color2: transparent) {
@@ -37,6 +36,7 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
 /*The home view's three partitions*/
 .hero-one {
   height: 55vh;
+  color: white;
 
   h1 {
     font-family: 'Open Sans', helvetica, arial, sans;
@@ -56,12 +56,13 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
 }
 
 .hero-two {
-  /*Allow visibility even when hero three changes perspective*/
+  /*Allow visibility even if hero three changes perspective property*/
   z-index: 1;
   /*Transparent background*/
   background-color: rgba(0, 0, 0, 0);
-  background-image: image-url('sky.svg');
+  background-image: image-url('mountains.svg');
   background-repeat: no-repeat;
+  /*Can stretch bg image due to adding 'preserveAspectRatio="none"' line to it*/
   background-size: 105vw 20vh;
   /*hero section dimensions*/
   width: 100vw;
@@ -303,5 +304,5 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, #000000);
       } /* .vertical-gridlines END */
     } /* .grid END */ 
   } /* .plane END */
-}
-}
+} /* .hero-three END */
+} /* .home END */
