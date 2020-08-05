@@ -37,7 +37,24 @@
     ctx.canvas.height = window.innerHeight;
     // ctx.fillStyle = "#a2a2d0";
     // ctx.fillRect(0,0,150,75);
+    // ctx.fillStyle = "#3d6bf9";
+    // ctx.fillRect(300, 300, 50, 50);
   }
+
+  // TODO: Create canvas that resizes with the window
+  // Resizes game's canvas to that of current view's size
+  function resizeCanvas(){
+    canvas = document.getElementById("game-canvas");
+    if (canvas.width  < window.innerWidth) {
+        canvas.width  = window.innerWidth;
+    }
+
+    if (canvas.height < window.innerHeight) {
+        canvas.height = window.innerHeight;
+    }
+  }
+
+  window.addEventListener("resize", resizeCanvas);
 </script>
 <noscript>Error: Please download JavaScript for your browser.</noscript>
 
