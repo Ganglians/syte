@@ -41,9 +41,8 @@
     ctx.fillRect(300, 300, 50, 50);
   }
 
-  // TODO: Create canvas that resizes with the window
   // Resizes game's canvas to that of current view's size
-  function resizeCanvas(){
+  window.addEventListener("resize", function(event) {
     canvas = document.getElementById("game-canvas");
     if (canvas.width  < window.innerWidth) {
         canvas.width  = window.innerWidth;
@@ -52,9 +51,25 @@
     if (canvas.height < window.innerHeight) {
         canvas.height = window.innerHeight;
     }
-  }
+  });
 
-  window.addEventListener("resize", resizeCanvas);
+  // node = window in this case
+  window.addEventListener('keydown', function(event) {
+    switch (event.key) {
+      case "ArrowLeft":
+        document.getElementById("demo").innerHTML = "Left";
+      break;
+      case "ArrowRight":
+        document.getElementById("demo").innerHTML = "Right";
+      break;
+      case "ArrowUp":
+        document.getElementById("demo").innerHTML = "Up";
+      break;
+      case "ArrowDown":
+        document.getElementById("demo").innerHTML = "Down";
+      break;
+    }
+  });
 </script>
 <noscript>Error: Please download JavaScript for your browser.</noscript>
 
@@ -92,7 +107,7 @@
 <canvas id="game-canvas" class="hidden"> 
 Your browser does not support the HTML canvas tag.
 </canvas>
-<!-- Button, with listener: press to start the game script-->
+<!-- Button click event: press to start the game script-->
 <button id="play-button" type="button" onclick="gameStart()">Play</button>
 
 <div class="hero-one">
