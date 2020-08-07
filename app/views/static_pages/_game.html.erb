@@ -1,7 +1,8 @@
 <!-- Game's javascript (place directly for now to reduce compiling time) -->
 <!-- < %= javascript_pack_tag 'game' %> -->
 <script>
-  var cassie; // Player token's name
+  //var cassie; // Player token's name
+  var cassie = new gamePart("user", 40, 40, "red", 0, 0);
 
 
   // Function that toggles an element's visibility
@@ -14,8 +15,10 @@
     start : function() {
       // Initialize player token
       //cassie = new gamePart("user", 40, 40, "red", window.innerWidth/2, window.innerHeight);
-      cassie = new gamePart("user", 40, 40, "red", 0, 0);
-      // Change what element contains inside when user clicks 'play' button
+      // cassie = new gamePart("user", 40, 40, "red", 0, 0);
+
+      // Make sure values are at their default when game is starting
+      this.reset();
       this.canvas = document.getElementById("game-canvas");
       document.getElementById("demo").innerHTML = "Game start";
       // Make canvas visible
@@ -24,11 +27,17 @@
       this.canvas.width  = window.innerWidth;
       this.canvas.height = window.innerHeight;
       this.ctx = this.canvas.getContext("2d");
+      // How fast game will be moving
       this.interval = setInterval(gameFrame, 5);
-
     },
     clear : function() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    reset: function() {
+      // All settings and game components are at their starting values
+      clearInterval(this.interval);
+      //cassie.x = 0;
+      //cassie.y = 0;
     }
   }
 
@@ -120,6 +129,10 @@
     gameArea.clear();
     cassie.newPos();
     cassie.update();
+  }
+
+  function gameOn() {
+    gameArea.start();
   }
 
 </script>
