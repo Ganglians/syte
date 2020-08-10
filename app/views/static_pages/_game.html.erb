@@ -1,142 +1,152 @@
 <!-- Game's javascript (place directly for now to reduce compiling time) -->
 <!-- < %= javascript_pack_tag 'game' %> -->
+
+
 <script>
-  //var cassie; // Player token's name
-  var cassie = new gamePart("user", 40, 40, "red", 0, 0);
 
 
-  // Function that toggles an element's visibility
-  const toggle = (elem) => {
-      elem.classList.toggle('hidden');
+//var cassie; // Player token's name
+var cassie = new gamePart("user", 40, 40, "red", 0, 0);
+
+// Function that toggles an element's visibility
+const toggle = (elem) => {
+    elem.classList.toggle('hidden');
+}
+
+var gameArea = {
+  //cassie = new gamePart("user", 40, 40, red, window.innerWidth/2, window.innerHeight),
+  start : function() {
+    // Initialize player token
+    //cassie = new gamePart("user", 40, 40, "red", window.innerWidth/2, window.innerHeight);
+    // cassie = new gamePart("user", 40, 40, "red", 0, 0);
+
+    // Make sure values are at their default when game is starting
+    this.reset();
+    this.canvas = document.getElementById("game-canvas");
+    document.getElementById("demo").innerHTML = "Game start";
+    // Make canvas visible
+    toggle(this.canvas);
+    // Set up canvas dimensions
+    this.canvas.width  = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+    this.ctx = this.canvas.getContext("2d");
+    // How fast game will be moving
+    this.interval = setInterval(gameFrame, 5);
+  },
+  clear : function() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  },
+  reset: function() {
+    // All settings and game components are at their starting values
+    clearInterval(this.interval);
+    //cassie.x = 0;
+    //cassie.y = 0;
+  }
+}
+
+// Resizes game's canvas (A.K.A. 'gameArea') to dynamic page size (i.e. When 
+// user changes their browser's size)
+window.addEventListener("resize", function(event) {
+  canvas = document.getElementById("game-canvas");
+  if (canvas.width  < window.innerWidth) {
+      canvas.width  = window.innerWidth;
   }
 
-  var gameArea = {
-    //cassie = new gamePart("user", 40, 40, red, window.innerWidth/2, window.innerHeight),
-    start : function() {
-      // Initialize player token
-      //cassie = new gamePart("user", 40, 40, "red", window.innerWidth/2, window.innerHeight);
-      // cassie = new gamePart("user", 40, 40, "red", 0, 0);
-
-      // Make sure values are at their default when game is starting
-      this.reset();
-      this.canvas = document.getElementById("game-canvas");
-      document.getElementById("demo").innerHTML = "Game start";
-      // Make canvas visible
-      toggle(this.canvas);
-      // Set up canvas dimensions
-      this.canvas.width  = window.innerWidth;
-      this.canvas.height = window.innerHeight;
-      this.ctx = this.canvas.getContext("2d");
-      // How fast game will be moving
-      this.interval = setInterval(gameFrame, 5);
-    },
-    clear : function() {
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    },
-    reset: function() {
-      // All settings and game components are at their starting values
-      clearInterval(this.interval);
-      //cassie.x = 0;
-      //cassie.y = 0;
-    }
+  if (canvas.height < window.innerHeight) {
+      canvas.height = window.innerHeight;
   }
+});
 
-  // Resizes game's canvas to that of current view's size
-  window.addEventListener("resize", function(event) {
-    canvas = document.getElementById("game-canvas");
-    if (canvas.width  < window.innerWidth) {
-        canvas.width  = window.innerWidth;
-    }
-
-    if (canvas.height < window.innerHeight) {
-        canvas.height = window.innerHeight;
-    }
-  });
-
-  // TODO Need to make this its own function, draw the square beforehand and call the keydown event 
-  // node = window in this case
-  window.addEventListener('keydown', function(event) {
+// TODO Need to make this its own function, draw the square beforehand and call the keydown event 
+// node = window in this case
+// Deal with player token's controls 
+// Player token moves left or right depending on pressed arrow key
+window.addEventListener('keydown', function(event) {
     // var canvas = document.getElementById("game-canvas");
     // var ctx = canvas.getContext("2d");
-
-    // if (canvas.getContext) {
-      switch (event.key) {
-        case "ArrowLeft":
-          document.getElementById("demo").innerHTML = "Left";
-          cassie.dir = "left";
-        break;
-        case "ArrowRight":
-          document.getElementById("demo").innerHTML = "Right";
-          cassie.dir = "right";
-        break;
-        // case "ArrowUp":
-        //   document.getElementById("demo").innerHTML = "Up";
-        // break;
-        // case "ArrowDown":
-        //   document.getElementById("demo").innerHTML = "Down";
-        // break;
-        default:
-        document.getElementById("demo").innerHTML = "null";
-          cassie.dir = null;
-        break;
-      }
+  // if (canvas.getContext) {
+    switch (event.key) {
+      case "ArrowLeft":
+        document.getElementById("demo").innerHTML = "Left";
+        // Player token travels to the left (decreasing/negative)
+        cassie.velocity = -1;
+      break;
+      case "ArrowRight":
+        document.getElementById("demo").innerHTML = "Right";
+        // Player token travels to the right (increasing/positive)
+        cassie.velocity = 1;
+      break;
+      // case "ArrowUp":
+      //   document.getElementById("demo").innerHTML = "Up";
+      // break;
+      // case "ArrowDown":
+      //   document.getElementById("demo").innerHTML = "Down";
+      // break;
+      default:
+      break;
+    }
       // ctx.save();
     // }
     // else {
     //   alert("Your browser does not support this game");
     // }
-  });
+});
 
-  function gamePart(type, width, height, color = "white", x, y, dir = null) {
-    this.type = type;
-    this.width = width;
-    this.height = height;
-    this.color = color;
-    this.x = x;
-    this.y = y;
-    this.dir = dir;
+// Player token stops moving when player stops pressing arrow key
+window.addEventListener('keyup', function(event) {
+  if(event.key == 'ArrowLeft' || event.key == 'ArrowRight') {
+    cassie.velocity = 0;
+  }
+  else {
 
-    this.update = function() {
-      ctx = ctx = gameArea.ctx;
-      switch(this.type) {
-        case "user": //Redraw
-          ctx.fillStyle = color;
-          ctx.fillRect(this.x, this.y, this.width, this.height);
-        break;
+  }
+});
 
-        default:
-        break;
-      }
-    }
+function gamePart(type, width, height, color = "white", x = 0, y = 0, velocity = 0, speedBoost = 1) {
+  this.type = type;
+  this.width = width;
+  this.height = height;
+  this.color = color;
+  // Object position in the (x, y) plane
+  this.x = x;
+  this.y = y;
 
-    this.newPos = function() {
-      switch(this.dir) {
-        case "left":
-          this.x -= 1;
-        break;
+  this.velocity = velocity;
+  // A velocity multiplier 
+  this.speedBoost = speedBoost;
 
-        case "right":
-          this.x += 1;
-        break;
+  this.update = function() {
+    ctx = gameArea.ctx;
+    switch(this.type) {
+      case "user": //Redraw
+        ctx.fillStyle = color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+      break;
 
-        default:
-        break;
-      }
+      default:
+      break;
     }
   }
 
-  function gameFrame() {
-    gameArea.clear();
-    cassie.newPos();
-    cassie.update();
+  this.newPos = function() {
+    this.x += this.velocity * this.speedBoost;
   }
+}
 
-  function gameOn() {
-    gameArea.start();
-  }
+function gameFrame() {
+  gameArea.clear();
+  cassie.newPos();
+  cassie.update();
+}
+
+function gameOn() {
+  gameArea.start();
+}
+
 
 </script>
 <noscript>Error: Please download JavaScript for your browser.</noscript>
+
 
 <!-- Page body -->
 
