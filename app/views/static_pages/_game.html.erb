@@ -1,10 +1,11 @@
 <!-- Game's javascript (place directly for now to reduce compiling time) -->
 <!-- < %= javascript_pack_tag 'game' %> -->
 <script>
-//var cassie; // Player token's name
+// Player token's name
 var cassie = new gamePart("user", 40, 40, "red");
 // List of which current keys are being pressed (i.e. 'keydown') or not
 var activeKeys = {};
+var holding = '';
 
 // Function that toggles an element's visibility
 const toggle = (elem) => {
@@ -61,15 +62,14 @@ window.addEventListener("resize", function(event) {
   }
 });
 
-// TODO Need to make this its own function, draw the square beforehand and call the keydown event 
-// node = window in this case
+// 'node' = 'window' in this case
 // Deal with player token's controls 
 // Player token moves left or right depending on pressed arrow key
 window.addEventListener('keydown', function(event) {
-  activeKeys[event.key] = true;
+  activeKeys[event.key] = true; // Player presses a key, true in array
 });
 window.addEventListener('keyup', function(event) {
-  activeKeys[event.key] = false;
+  activeKeys[event.key] = false; // Player stops pressing key, false in array
 });
 
 function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 0, speedBoost = 1) {
@@ -104,18 +104,28 @@ function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 
     // Variables tell what arrow keys are being pressed
     right = activeKeys['ArrowRight'];
     left = activeKeys['ArrowLeft'];
-    // Both arrow keys or no arrow keys being pressed
-    neither = !right && !left;
-    both = right && left;
-
-    if(right) {
-      this.velocity = 1;
-    }
-    if (left) {
+    if (left && !right) {
+      holding = 'left';
       this.velocity = -1;
     }
-
-    if(neither || both) {
+    if(!left && right) {
+      holding = 'right';
+      this.velocity = 1;
+    }
+    if(left && right) {
+      if(holding == 'right') { // Was holding right first
+        this.velocity = -1; // Most recent is left
+      }
+      if(holding == 'left') { // Was holding left first
+        this.velocity = 1; // Most recent is right
+      }
+      if(holding == '') { // Edge case, pressed both at exact time, choose one
+        holding = 'right';
+        this.velocity = -1; 
+      }
+    }
+    if(!right && !left) {
+      holding = '';
       this.velocity = 0;
     }
 
