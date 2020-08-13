@@ -2,7 +2,8 @@
 <!-- < %= javascript_pack_tag 'game' %> -->
 <script>
 // Player token's name
-var cassie = new gamePart("user", 40, 40, "red");
+var cassie = new playerToken("user", 40, 40, "red");
+var invaders = [];
 // List of which current keys are being pressed (i.e. 'keydown') or not
 var activeKeys = {};
 var holding = '';
@@ -13,14 +14,14 @@ const toggle = (elem) => {
 }
 
 var gameArea = {
-  //cassie = new gamePart("user", 40, 40, red, window.innerWidth/2, window.innerHeight),
+  //cassie = new playerToken("user", 40, 40, red, window.innerWidth/2, window.innerHeight),
   start : function() {
     // Initialize player token
-    //cassie = new gamePart("user", 40, 40, "red", window.innerWidth/2, window.innerHeight);
-    // cassie = new gamePart("user", 40, 40, "red", 0, 0);
+    //cassie = new playerToken("user", 40, 40, "red", window.innerWidth/2, window.innerHeight);
+    // cassie = new playerToken("user", 40, 40, "red", 0, 0);
 
     // Make sure values are at their default when game is starting
-    // this.reset();
+    this.reset();
     this.canvas = document.getElementById("game-canvas");
     document.getElementById("demo").innerHTML = "Game start";
 
@@ -33,6 +34,7 @@ var gameArea = {
 
     // Set up player token's positioning
     cassie.x = this.canvas.width/2;
+    cassie.y = this.canvas.height - "40"; // -40 accomodates for object's size
 
     // How fast game will be moving
     this.interval = setInterval(gameFrame, 5);
@@ -85,20 +87,26 @@ function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 
   // A velocity multiplier 
   this.speedBoost = speedBoost;
 
-  this.update = function() {
-    ctx = gameArea.ctx;
-    switch(this.type) {
-      case "user": //Redraw
-        // TEST TO SEE IF MULTIPLE SQUARES STACKED UPON ONE ANOTHER (WHICH 
-        // WOULD INCREASE OPACITY)
-        // ctx.fillStyle = "rgba(255, 0, 0, 0.5)"; // Pass
-        ctx.fillStyle = color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        break;
-      default:
-        break;
-    }
+  this.update = function() { // Redraw according to new positioning
+    ctx = gameArea.ctx;   
+    ctx.fillStyle = color;
+    ctx.fillRect(this.x, this.y, this.width, this.height);
   }
+
+  // TODO: INHERITANCE and replace this function with a different one of the same name
+  this.newPos = function() {
+    // TODO: MAKE GENERIC VERSION OF NEW POSITIONING
+  } 
+}
+
+function playerToken(type, width, height, color, x, y, velocity, speedBoost) {
+  gamePart.call(this, type, width, height, color, x, y, velocity, speedBoost);
+  this.prototype = Object.create(gamePart.prototype);
+  Object.defineProperty(this, 'constructor', { 
+      value: playerToken, 
+      enumerable: false, // so that it does not appear in 'for in' loop
+      writable: true 
+  });
 
   this.newPos = function() {
     // Variables tell what arrow keys are being pressed
@@ -128,7 +136,7 @@ function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 
       holding = '';
       this.velocity = 0;
     }
-
+    // Update positioning
     this.x += this.velocity * this.speedBoost;
   }
 }
