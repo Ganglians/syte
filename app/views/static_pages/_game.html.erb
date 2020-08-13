@@ -100,6 +100,7 @@ function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 
 }
 
 function playerToken(type, width, height, color, x, y, velocity, speedBoost) {
+  // playerToken inherits from more generic gamePart class
   gamePart.call(this, type, width, height, color, x, y, velocity, speedBoost);
   this.prototype = Object.create(gamePart.prototype);
   Object.defineProperty(this, 'constructor', { 
@@ -108,10 +109,13 @@ function playerToken(type, width, height, color, x, y, velocity, speedBoost) {
       writable: true 
   });
 
+  // var canvas = document.getElementById("game-canvas");
   this.newPos = function() {
     // Variables tell what arrow keys are being pressed
+    canvas = document.getElementById("game-canvas");
     right = activeKeys['ArrowRight'];
     left = activeKeys['ArrowLeft'];
+    dist = this.x + this.velocity * this.speedBoost;
     if (left && !right) {
       holding = 'left';
       this.velocity = -1;
@@ -136,8 +140,17 @@ function playerToken(type, width, height, color, x, y, velocity, speedBoost) {
       holding = '';
       this.velocity = 0;
     }
-    // Update positioning
-    this.x += this.velocity * this.speedBoost;
+
+    // Stay in canvas' boundaries 
+    if(dist < 0) {
+      this.x = 0;
+    }
+    else if(dist + this.width > canvas.width) {
+      this.x = canvas.width - this.width; 
+    }
+    else {
+      this.x += this.velocity * this.speedBoost;
+    }
   }
 }
 
