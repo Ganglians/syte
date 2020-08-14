@@ -3,7 +3,7 @@
 <script>
 // Player token's name
 var cassie = new playerToken("user", 40, 40, "red");
-var invaders = [];
+var invaders = [], frameNum = 350;
 // Object list of which current keys are being pressed (i.e. 'keydown') or not
 var activeKeys = {};
 var holding = '';
@@ -23,6 +23,7 @@ var gameArea = {
     // Make sure values are at their default when game is starting
     this.reset();
     this.canvas = document.getElementById("game-canvas");
+    // Set demo text to indicate game is starting (for now, just to verify)
     document.getElementById("demo").innerHTML = "Game start";
 
     // Make canvas visible
@@ -37,7 +38,7 @@ var gameArea = {
     cassie.y = this.canvas.height - cassie.height; // accomodate for object's size
 
     // Add an invader/enemy token
-    invaders.push(new gamePart("invader", 40, 20, "green", this.canvas.width/2, 0, 1, 0.5));
+    invaders.push(new gamePart("invader", 40, 20, "green", this.canvas.width/2, 0, 1, 15));
     // How fast game will be moving
     this.interval = setInterval(gameFrame, 5);
   },
@@ -95,7 +96,7 @@ function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 
   this.redraw = function() { // Redraw according to new positioning
     ctx = gameArea.ctx;   
     ctx.fillStyle = color;
-    ctx.globalAlpha = 0.5;
+    // ctx.globalAlpha = 0.5; // Opacity
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 
@@ -166,10 +167,19 @@ function gameFrame() {
   cassie.newPos();
   cassie.redraw();
 
+  if(frameNum++ >= 350) {
   invaders.forEach(function(invader) {
     invader.newPos();
     invader.redraw();
-  });  
+  });
+  frameNum = 0;
+  }
+  else {
+    invaders.forEach(function(invader) {
+      // invader.newPos();
+      invader.redraw();
+    });
+  }  
 }
 
 function gameOn() {
