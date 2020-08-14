@@ -4,7 +4,7 @@
 // Player token's name
 var cassie = new playerToken("user", 40, 40, "red");
 var invaders = [];
-// List of which current keys are being pressed (i.e. 'keydown') or not
+// Object list of which current keys are being pressed (i.e. 'keydown') or not
 var activeKeys = {};
 var holding = '';
 
@@ -34,20 +34,25 @@ var gameArea = {
 
     // Set up player token's positioning
     cassie.x = this.canvas.width/2;
-    cassie.y = this.canvas.height - "40"; // -40 accomodates for object's size
+    cassie.y = this.canvas.height - cassie.height; // accomodate for object's size
 
+    // Add an invader/enemy token
+    invaders.push(new gamePart("invader", 40, 20, "green", this.canvas.width/2, 0, 1, 0.5));
     // How fast game will be moving
     this.interval = setInterval(gameFrame, 5);
   },
   clear : function() {
+    // [i] TODO using 'canvas' and 'ctx' in multiple functions of 'gameArea' need to DRY this out
+    this.canvas = document.getElementById("game-canvas");
+    this.ctx = this.canvas.getContext("2d");
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   },
   reset: function() {
     // All settings and game components are at their starting values
-    // this.clear(); // Might not need this here
-    clearInterval(this.interval);
-    //cassie.x = 0;
-    //cassie.y = 0;
+    //this.clear(); // Might not need this here
+
+    clearInterval(this.interval); // nothing should be moving/responding
+    invaders = [];
   }
 }
 
@@ -87,15 +92,17 @@ function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 
   // A velocity multiplier 
   this.speedBoost = speedBoost;
 
-  this.update = function() { // Redraw according to new positioning
+  this.redraw = function() { // Redraw according to new positioning
     ctx = gameArea.ctx;   
     ctx.fillStyle = color;
+    ctx.globalAlpha = 0.5;
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 
   // TODO: INHERITANCE and replace this function with a different one of the same name
   this.newPos = function() {
     // TODO: MAKE GENERIC VERSION OF NEW POSITIONING
+    this.x += this.velocity * this.speedBoost;
   } 
 }
 
@@ -157,7 +164,12 @@ function playerToken(type, width, height, color, x, y, velocity, speedBoost) {
 function gameFrame() {
   gameArea.clear();
   cassie.newPos();
-  cassie.update();
+  cassie.redraw();
+
+  invaders.forEach(function(invader) {
+    invader.newPos();
+    invader.redraw();
+  });  
 }
 
 function gameOn() {
