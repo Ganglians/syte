@@ -3,7 +3,7 @@
 <script>
 // Player token's name
 var cassie = new playerToken("user", 40, 40, "red");
-var invaders = [], frameNum = 350;
+var invaders = [], frameNum = 0;
 // Object list of which current keys are being pressed (i.e. 'keydown') or not
 var activeKeys = {};
 var holding = '';
@@ -34,26 +34,31 @@ var gameArea = {
     this.ctx = this.canvas.getContext("2d");
 
     // Set up player token's positioning
-    cassie.x = this.canvas.width/2;
+    cassie.x = this.canvas.width/2 - cassie.width/2;
     cassie.y = this.canvas.height - cassie.height; // accomodate for object's size
 
     // Add an invader/enemy token
-    invaders.push(new gamePart("invader", 40, 20, "green", this.canvas.width/2, 0, 1, 15));
+    invaders.push(new gamePart("invader", 40, 20, "green", this.canvas.width/2 - 20, 0, 1, 15));
     // How fast game will be moving
     this.interval = setInterval(gameFrame, 5);
   },
+
   clear : function() {
     // [i] TODO using 'canvas' and 'ctx' in multiple functions of 'gameArea' need to DRY this out
     this.canvas = document.getElementById("game-canvas");
     this.ctx = this.canvas.getContext("2d");
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   },
+
   reset: function() {
     // All settings and game components are at their starting values
     //this.clear(); // Might not need this here
 
     clearInterval(this.interval); // nothing should be moving/responding
-    invaders = [];
+    // invaders
+    invaders = []; // erase invaders 
+    frameNum = 0; // reset frame reference back to zero
+
   }
 }
 
@@ -105,6 +110,11 @@ function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 
     // TODO: MAKE GENERIC VERSION OF NEW POSITIONING
     this.x += this.velocity * this.speedBoost;
   } 
+
+  // Determines whether or not one object has intersected another object's boundaries 
+  this.collision() {
+
+  }
 }
 
 function playerToken(type, width, height, color, x, y, velocity, speedBoost) {
@@ -166,8 +176,9 @@ function gameFrame() {
   gameArea.clear();
   cassie.newPos();
   cassie.redraw();
+  var frameUpper = 300;
 
-  if(frameNum++ >= 350) {
+  if(frameNum++ >= 325) {
   invaders.forEach(function(invader) {
     invader.newPos();
     invader.redraw();
