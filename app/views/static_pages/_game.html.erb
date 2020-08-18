@@ -38,7 +38,8 @@ var gameArea = {
     cassie.y = this.canvas.height - cassie.height; // accomodate for object's size
 
     // Add an invader/enemy token
-    invaders.push(new gamePart("invader", 40, 20, "green", this.canvas.width/2 - 20, 0, 1, 15));
+    invaders.push(new invaderToken("invader", 40, 50, "green", this.canvas.width/2 - 20, 0, 1, 15));
+    
     // How fast game will be moving
     this.interval = setInterval(gameFrame, 5);
   },
@@ -85,6 +86,7 @@ window.addEventListener('keyup', function(event) {
   activeKeys[event.key] = false; // Player stops pressing key, false in array
 });
 
+// Abstract object 
 function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 0, speedBoost = 1) {
   this.type = type;
   this.width = width;
@@ -107,16 +109,48 @@ function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 
 
   // TODO: INHERITANCE and replace this function with a different one of the same name
   this.newPos = function() {
-    // TODO: MAKE GENERIC VERSION OF NEW POSITIONING
-    this.x += this.velocity * this.speedBoost;
   } 
 
   // Determines whether or not one object has intersected another object's boundaries 
-  this.collision() {
-
+  this.collision = function() {
+    // TODO
   }
 }
 
+function invaderToken(type, width, height, color, x, y, velocity, speedBoost) {
+  // invaderToken inherits from more generic gamePart class
+  gamePart.call(this, type, width, height, color, x, y, velocity, speedBoost);
+  this.prototype = Object.create(gamePart.prototype);
+  Object.defineProperty(this, 'constructor', { 
+      value: invaderToken, 
+      enumerable: false, // so that it does not appear in 'for in' loop
+      writable: true 
+  });  
+
+  // TODO: INHERITANCE and replace this function with a different one of the same name
+  this.newPos = function() {
+    // TODO: MAKE GENERIC VERSION OF NEW POSITIONING
+    dist = this.x + this.velocity * this.speedBoost;
+    //this.x += this.velocity * this.speedBoost;
+
+    // Stay in canvas' boundaries 
+    if(dist <= 0 && this.velocity < 0) {
+      // Make sure invader doesn't go beyond boundary
+      this.x = 0;
+      // Make it move the opposite direction
+      this.velocity *= -1;
+    }
+    else if(this.width + dist >= canvas.width) {
+      // Make sure invader doesn't go beyond boundary
+      this.x = canvas.width - this.width; 
+      this.velocity *= -1;
+    }
+    else {
+      this.x = dist;
+    }
+  } 
+}
+// Can add new properties at the end of 'speedBoost'
 function playerToken(type, width, height, color, x, y, velocity, speedBoost) {
   // playerToken inherits from more generic gamePart class
   gamePart.call(this, type, width, height, color, x, y, velocity, speedBoost);
@@ -160,35 +194,41 @@ function playerToken(type, width, height, color, x, y, velocity, speedBoost) {
     }
 
     // Stay in canvas' boundaries 
-    if(dist < 0) {
+    if(dist == 0) {
+      // Keep in the same place
+    }
+    else if(dist < 0) {
       this.x = 0;
+    }
+    else if(dist + this.width == canvas.width) {
+      // Keep in the same place
     }
     else if(dist + this.width > canvas.width) {
       this.x = canvas.width - this.width; 
     }
     else {
-      this.x += this.velocity * this.speedBoost;
+      this.x = dist;
     }
   }
 }
 
 function gameFrame() {
-  gameArea.clear();
+  gameArea.clear(); // TODO: Optimize don't need to clear canvas each time
   cassie.newPos();
   cassie.redraw();
-  var frameUpper = 300;
+  var frameUpper = 250;
 
-  if(frameNum++ >= 325) {
-  invaders.forEach(function(invader) {
-    invader.newPos();
-    invader.redraw();
-  });
-  frameNum = 0;
+  if(frameNum++ >= frameUpper) {
+    invaders.forEach(function(invader) {
+      invader.newPos();
+      invader.redraw();
+    });
+    frameNum = 0;
   }
   else {
     invaders.forEach(function(invader) {
       // invader.newPos();
-      invader.redraw();
+      invader.redraw();// Won't be needed if dirty rectangles implemented
     });
   }  
 }
