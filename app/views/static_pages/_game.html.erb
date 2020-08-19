@@ -3,7 +3,7 @@
 <script>
 // Player token's name
 var cassie = new playerToken("user", 40, 40, "red");
-var invaders = [], frameNum = 0;
+var invaders = [], frameNum = 250, invaderCount = 0;
 // Object list of which current keys are being pressed (i.e. 'keydown') or not
 var activeKeys = {};
 var holding = '';
@@ -38,9 +38,19 @@ var gameArea = {
     cassie.y = this.canvas.height - cassie.height; // accomodate for object's size
 
     // Add an invader/enemy token
-    invaders.push(new invaderToken("invader", 40, 50, "green", this.canvas.width/2 - 20, 0, 1, 15));
-    
-    // How fast game will be moving
+    let vw = 40, // invader width
+        vh = 50; // invader height
+    let drawAt = 0;
+    invaderCount = 8;
+    let divvy = this.canvas.width/invaderCount;
+
+    for(let i = 0; i < invaderCount; i ++) {
+      invaders.push(new invaderToken("invader", vw, vh, "green", 
+                    drawAt + divvy/2 - vw/2, 0, 1, 20));
+      drawAt += divvy;
+    }
+    // First argument:  Function that loops while game is active. Updates all game tokens
+    // Second argument: Essentially how fast game will be moving (framerate)
     this.interval = setInterval(gameFrame, 5);
   },
 
@@ -103,7 +113,7 @@ function gamePart(type, width, height, color = "blue", x = 0, y = 0, velocity = 
   this.redraw = function() { // Redraw according to new positioning
     ctx = gameArea.ctx;   
     ctx.fillStyle = color;
-    // ctx.globalAlpha = 0.5; // Opacity
+    ctx.globalAlpha = 0.7; // Opacity
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 
@@ -128,20 +138,25 @@ function invaderToken(type, width, height, color, x, y, velocity, speedBoost) {
   });  
 
   // TODO: INHERITANCE and replace this function with a different one of the same name
+  //this.newPos = function(lBound, rBound) {
   this.newPos = function() {
     // TODO: MAKE GENERIC VERSION OF NEW POSITIONING
     dist = this.x + this.velocity * this.speedBoost;
     //this.x += this.velocity * this.speedBoost;
 
     // Stay in canvas' boundaries 
+    //if(dist <= lbound && this.velocity < 0) {
     if(dist <= 0 && this.velocity < 0) {
       // Make sure invader doesn't go beyond boundary
+      //this.x = (lBound + rBound)/2;
       this.x = 0;
       // Make it move the opposite direction
       this.velocity *= -1;
     }
+    //else if(this.width + dist >= rBound) {
     else if(this.width + dist >= canvas.width) {
       // Make sure invader doesn't go beyond boundary
+      //this.x = (lBound + rBound)/2;
       this.x = canvas.width - this.width; 
       this.velocity *= -1;
     }
@@ -216,8 +231,11 @@ function gameFrame() {
   gameArea.clear(); // TODO: Optimize don't need to clear canvas each time
   cassie.newPos();
   cassie.redraw();
-  var frameUpper = 250;
+  let frameUpper = 250;
 
+  // let divvy = canvas/invaders;
+
+  // Causes invader movement to appear blocky as position updates less often
   if(frameNum++ >= frameUpper) {
     invaders.forEach(function(invader) {
       invader.newPos();
