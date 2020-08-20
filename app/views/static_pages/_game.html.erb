@@ -88,7 +88,6 @@ window.addEventListener("resize", function(event) {
 
 // 'node' = 'window' in this case
 // Deal with player token's controls 
-// Player token moves left or right depending on pressed arrow key
 window.addEventListener('keydown', function(event) {
   activeKeys[event.key] = true; // Player presses a key, true in array
 });
@@ -138,26 +137,21 @@ function invaderToken(type, width, height, color, x, y, velocity, speedBoost) {
   });  
 
   // TODO: INHERITANCE and replace this function with a different one of the same name
-  //this.newPos = function(lBound, rBound) {
-  this.newPos = function() {
+  this.newPos = function(lBound, rBound) {
+  // this.newPos = function() {
     // TODO: MAKE GENERIC VERSION OF NEW POSITIONING
     dist = this.x + this.velocity * this.speedBoost;
     //this.x += this.velocity * this.speedBoost;
 
     // Stay in canvas' boundaries 
-    //if(dist <= lbound && this.velocity < 0) {
-    if(dist <= 0 && this.velocity < 0) {
-      // Make sure invader doesn't go beyond boundary
-      //this.x = (lBound + rBound)/2;
-      this.x = 0;
-      // Make it move the opposite direction
+    // REMARK: Shapes drawn from uper right corner
+    if(dist <= lBound && this.velocity < 0) {
+      // Invader changes direction when boundary reached
+      this.x = lBound;
       this.velocity *= -1;
     }
-    //else if(this.width + dist >= rBound) {
-    else if(this.width + dist >= canvas.width) {
-      // Make sure invader doesn't go beyond boundary
-      //this.x = (lBound + rBound)/2;
-      this.x = canvas.width - this.width; 
+    else if(dist + this.width >= rBound && this.velocity > 0) {
+      this.x = rBound - this.width; //toucn boundary then change direction
       this.velocity *= -1;
     }
     else {
@@ -233,13 +227,20 @@ function gameFrame() {
   cassie.redraw();
   let frameUpper = 250;
 
-  // let divvy = canvas/invaders;
+  let canvas = document.getElementById("game-canvas");
+  let divvy = this.canvas.width/invaderCount;
+  // rbound starts at end of one divvy unit so it's ahead by one divvy
+  let lbound = 0, rbound = divvy;
 
   // Causes invader movement to appear blocky as position updates less often
   if(frameNum++ >= frameUpper) {
+
     invaders.forEach(function(invader) {
-      invader.newPos();
+      invader.newPos(lbound, rbound);
       invader.redraw();
+      // Move boundaries to fit next element
+      lbound += divvy; 
+      rbound += divvy;
     });
     frameNum = 0;
   }
