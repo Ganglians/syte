@@ -1,12 +1,31 @@
 <!-- Game's javascript (place directly for now to reduce compiling time) -->
 <!-- < %= javascript_pack_tag 'game' %> -->
 <script>
+// Resizes game's canvas (A.K.A. 'gameArea') to dynamic page size (i.e. When 
+// user changes their browser's size)
+window.addEventListener("resize", function(event) {
+  canvas = document.getElementById("game-canvas");
+  if (canvas.width  < window.innerWidth) {
+    canvas.width  = window.innerWidth;
+  }
+
+  if (canvas.height < window.innerHeight) {
+    canvas.height = window.innerHeight;
+  }
+});
+
+// 'node' = 'window' in this case
+// Deal with player token's controls 
+window.addEventListener('keydown', function(event) {
+  activeKeys[event.key] = true; // Player presses a key, true in array
+});
+window.addEventListener('keyup', function(event) {
+  activeKeys[event.key] = false; // Player stops pressing key, false in array
+});  
+
 // Player token's name
 var cassie = new playerToken(40, 40, "red");
 let inv = new invaders();
-// *****  *****
-//var invaders = [], frameNum = 250, invaderCount = 0;
-// *****  *****
 
 // Object list of which current keys are being pressed (i.e. 'keydown') or not
 var activeKeys = {};
@@ -21,10 +40,6 @@ const toggle = (elem) => {
 var gameArea = {
   //cassie = new playerToken(40, 40, red, window.innerWidth/2, window.innerHeight),
   start : function() {
-    // Initialize player token
-    //cassie = new playerToken(40, 40, "red", window.innerWidth/2, window.innerHeight);
-    // cassie = new playerToken(40, 40, "red", 0, 0);
-
     // Make sure values are at their default when game is starting
     this.reset();
     this.canvas = document.getElementById("game-canvas");
@@ -42,8 +57,11 @@ var gameArea = {
     cassie.x = this.canvas.width/2 - cassie.width/2;
     cassie.y = this.canvas.height - cassie.height; // accomodate for object's size
 
-    inv.setup(this.canvas.width);
-    inv.create();
+    let numInvaders = 8;
+    let frameRate = 250;
+    vDim = {vaderW: 50, vaderH: 60}; // Invader dimensions
+
+    inv.setup(numInvaders, this.canvas.width, frameRate, vDim);
 
     // First argument:  Function that loops while game is active. Updates all game tokens
     // Second argument: Essentially how fast game will be moving (framerate)
@@ -64,32 +82,8 @@ var gameArea = {
     clearInterval(this.interval); // nothing should be moving/responding
     // invaders
     invaders = []; // erase invaders 
-    frameNum = 0; // reset frame reference back to zero
-
   }
 }
-
-// Resizes game's canvas (A.K.A. 'gameArea') to dynamic page size (i.e. When 
-// user changes their browser's size)
-window.addEventListener("resize", function(event) {
-  canvas = document.getElementById("game-canvas");
-  if (canvas.width  < window.innerWidth) {
-      canvas.width  = window.innerWidth;
-  }
-
-  if (canvas.height < window.innerHeight) {
-      canvas.height = window.innerHeight;
-  }
-});
-
-// 'node' = 'window' in this case
-// Deal with player token's controls 
-window.addEventListener('keydown', function(event) {
-  activeKeys[event.key] = true; // Player presses a key, true in array
-});
-window.addEventListener('keyup', function(event) {
-  activeKeys[event.key] = false; // Player stops pressing key, false in array
-});
 
 // Abstract object 
 function gamePart(width, height, color = "blue", x = 0, y = 0, velocity = 0, speedBoost = 1) {
@@ -121,71 +115,68 @@ function gamePart(width, height, color = "blue", x = 0, y = 0, velocity = 0, spe
   }
 }
 
-function invaderToken(width, height, color, x, y, velocity, speedBoost) {
-  // invaderToken inherits from more generic gamePart class
-  gamePart.call(this, width, height, color, x, y, velocity, speedBoost);
-  this.prototype = Object.create(gamePart.prototype);
-  Object.defineProperty(this, 'constructor', { 
-      value: invaderToken, 
-      enumerable: false, // so that it does not appear in 'for in' loop
-      writable: true 
-  });  
-
-  // TODO: INHERITANCE and replace this function with a different one of the same name
-  this.newPos = function(lBound, rBound) {
-    dist = this.x + this.velocity * this.speedBoost;
-
-    // Stay in canvas' boundaries 
-    // REMARK: Shapes drawn from uper right corner
-    if(dist <= lBound && this.velocity < 0) {
-      // Invader changes direction when boundary reached
-      this.x = lBound;
-      this.velocity *= -1;
-      //if(dist == lBound) {
-        this.y += 10;
-      //}
-    }
-    else if(dist + this.width >= rBound && this.velocity > 0) {
-      this.x = rBound - this.width; //toucn boundary then change direction
-      this.velocity *= -1;
-      //if(dist == rBound){
-        this.y += 10;
-      //}
-    }
-    else {
-      this.x = dist;
-    }
-  } 
-}
-
 function invaders() {
-  var invadArr = []; // Invader array
-  //this.c = document.getElementById("game-canvas");
-  // var canvas = this.c.width;
-  //var divvy;
-  // rbound starts at end of one divvy unit so it's ahead by one divvy
-  //var lbound = 0, rbound = divvy;
-  var frameUpper = 250;
-  var canvas;
-  // var canvas = 50;
-  var invaderCount;
-  var divvy;
+  // Invader's game token
+  function invaderToken(width, height, color, x, y, velocity, speedBoost) {
+    // invaderToken inherits from more generic gamePart class
+    gamePart.call(this, width, height, color, x, y, velocity, speedBoost);
+    this.prototype = Object.create(gamePart.prototype);
+    Object.defineProperty(this, 'constructor', { 
+        value: invaderToken, 
+        enumerable: false, // so that it does not appear in 'for in' loop
+        writable: true 
+    });  
 
-  this.setup = function(c) {
-    invadArr = []; // Make sure invader array is clear
-    canvas = c;
-    // divvy = canvas/invaderCount;
+    // TODO: INHERITANCE and replace this function with a different one of the same name
+    this.newPos = function(lBound, rBound) {
+      dist = this.x + this.velocity * this.speedBoost;
+
+      // Stay in canvas' boundaries 
+      // REMARK: Shapes drawn from uper right corner
+      if(dist <= lBound && this.velocity < 0) {
+        // Invader changes direction when boundary reached
+        this.x = lBound;
+        this.velocity *= -1;
+        //if(dist == lBound) {
+          this.y += 10;
+        //}
+      }
+      else if(dist + this.width >= rBound && this.velocity > 0) {
+        this.x = rBound - this.width; //toucn boundary then change direction
+        this.velocity *= -1;
+        //if(dist == rBound){
+          this.y += 10;
+        //}
+      }
+      else {
+        this.x = dist;
+      }
+    } 
   }
 
-  this.create = function(num = 8, frameRate = 250) { // number of invaders, relative framerate
-    // this.canvas = document.getElementById("game-canvas");
-    // Add an invader/enemy token
-    let vw = 40, // invader width
-        vh = 50; // invader height
+  var invadArr = []; // Invader array
+  // Default values in the event user does not call setup
+  var invaderCount = 1;
+  var canvas = 100;
+  var frameUpper = 250;
+  var frameNum = 0;
+  var divvy = 10;
+  var vw, vh; // invader width and height
+
+  this.setup = function(numInvaders = 1, canvas = 100, frameRate = 250, {vaderH, vaderW}) {
+    invadArr = []; // Make sure invader array is clear
+
+    invaderCount = numInvaders;
+    this.canvas = canvas;
+    frameUpper = frameRate;
+    frameNum = 0;
+    divvy = this.canvas/invaderCount;
+
+    vw =  vaderH;
+    vh = vaderW;
+
     let drawAt = 0;
-    invaderCount = num;
-    divvy = canvas/invaderCount;
-    let step = divvy/9;
+    let step = divvy/9; // invader will move in increments
 
     for(let i = 0; i < invaderCount; i ++) {
       invadArr.push(new invaderToken(vw, vh, "green", 
@@ -195,6 +186,7 @@ function invaders() {
   }
 
   this.move = function() {
+    // rbound starts at end of one divvy unit so it's ahead by one divvy
     let lbound = 0, rbound = divvy;
     // Causes invader movement to appear blocky as position updates less often
     if(frameNum++ >= frameUpper) {
