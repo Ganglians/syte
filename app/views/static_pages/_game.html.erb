@@ -59,7 +59,7 @@ var gameArea = {
 
     let numInvaders = 8;
     let frameRate = 250;
-    vDim = {vaderW: 50, vaderH: 60}; // Invader dimensions
+    vDim = {vaderW: 20, vaderH: 60}; // Invader dimensions
 
     inv.setup(numInvaders, this.canvas.width, frameRate, vDim);
 
@@ -86,17 +86,13 @@ var gameArea = {
 }
 
 // Abstract object 
-function gamePart(width, height, color = "blue", x = 0, y = 0, velocity = 0, speedBoost = 1) {
+function gamePart(width, height, color = "blue", x = 0, y = 0) {
   this.width = width;
   this.height = height;
   this.color = color;
   // Object position in the (x, y) plane
   this.x = x;
   this.y = y;
-
-  this.velocity = velocity;
-  // A velocity multiplier 
-  this.speedBoost = speedBoost;
 
   this.draw = function() { // Redraw according to new positioning
     ctx = gameArea.ctx;   
@@ -115,102 +111,90 @@ function gamePart(width, height, color = "blue", x = 0, y = 0, velocity = 0, spe
   }
 }
 
+// Invader's game token
+function invaderToken(width, height, color, x, y, velocity, speedBoost = 1) {
+  // invaderToken inherits from more generic gamePart class
+  gamePart.call(this, width, height, color, x, y, velocity, speedBoost);
+  this.prototype = Object.create(gamePart.prototype);
+  Object.defineProperty(this, 'constructor', { 
+      value: invaderToken, 
+      enumerable: false, // so that it does not appear in 'for in' loop
+      writable: true 
+  });  
+}
+
 function invaders() {
-  // Invader's game token
-  function invaderToken(width, height, color, x, y, velocity, speedBoost) {
-    // invaderToken inherits from more generic gamePart class
-    gamePart.call(this, width, height, color, x, y, velocity, speedBoost);
-    this.prototype = Object.create(gamePart.prototype);
-    Object.defineProperty(this, 'constructor', { 
-        value: invaderToken, 
-        enumerable: false, // so that it does not appear in 'for in' loop
-        writable: true 
-    });  
-
-    // TODO: INHERITANCE and replace this function with a different one of the same name
-    this.newPos = function(lBound, rBound) {
-      dist = this.x + this.velocity * this.speedBoost;
-
-      // Stay in canvas' boundaries 
-      // REMARK: Shapes drawn from uper right corner
-      if(dist <= lBound && this.velocity < 0) {
-        // Invader changes direction when boundary reached
-        this.x = lBound;
-        this.velocity *= -1;
-        //if(dist == lBound) {
-          this.y += 10;
-        //}
-      }
-      else if(dist + this.width >= rBound && this.velocity > 0) {
-        this.x = rBound - this.width; //toucn boundary then change direction
-        this.velocity *= -1;
-        //if(dist == rBound){
-          this.y += 10;
-        //}
-      }
-      else {
-        this.x = dist;
-      }
-    } 
-  }
-
-  var invadArr = []; // Invader array
-  // Default values in the event user does not call setup
+  var invadArr = [];
+  // Default values
   var invaderCount = 1;
-  var canvas = 100;
+  var canvasW = 100;
   var frameUpper = 250;
-  var frameNum = 0;
-  var divvy = 10;
-  var vw, vh; // invader width and height
+  var frameNum = 0; // Marks the current frame you're on
+  var spaceBetween = 25;
+  var vw, vh; // invader dimensions (width and height)
+  var vLeftmost, vRightmost;
+  var moveRight = true;
+  var velocity = 1;
 
-  this.setup = function(numInvaders = 1, canvas = 100, frameRate = 250, {vaderH, vaderW}) {
+  this.setup = function(invaderCount = 1, can = 100, frameRate = 250, {vaderH, vaderW}) {
     invadArr = []; // Make sure invader array is clear
-
-    invaderCount = numInvaders;
-    this.canvas = canvas;
+    // this.invaderCount = invaderCount;
+    this.invaderCount = invaderCount;
+    // this.canvasW = canvasW;
+    canvasW = can;
     frameUpper = frameRate;
     frameNum = 0;
-    divvy = this.canvas/invaderCount;
+    vw =  vaderW;
+    vh = vaderH;
 
-    vw =  vaderH;
-    vh = vaderW;
-
-    let drawAt = 0;
-    let step = divvy/9; // invader will move in increments
+    // Relative space between each invader
+    let b = 60;
+    // X Coordinate of next invader acconuting for previous width
+    let next = vaderW + b;
+    // Space between left most & rightmost invaders and the canvas boundary
+    let edgeSpace = (canvasW - invaderCount*vw - b*(invaderCount - 1))/2;
+    let step = edgeSpace/6 - vaderW*invaderCount;
+    let drawAt = edgeSpace;
 
     for(let i = 0; i < invaderCount; i ++) {
-      invadArr.push(new invaderToken(vw, vh, "green", 
-                    drawAt + divvy/2 - vw/2, 0, 1, step));
-      drawAt += divvy;
+      invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1, step));
+      drawAt += next;
     }
+    // Reference for invaders at both ends
+    vLeftmost  = invadArr[0];
+    vRightmost = invadArr[invadArr.length - 1];
+
+    velocity = 1; // Start off moving to the right
+    vRightmost.speedBoost = 30;
   }
 
   this.move = function() {
-    // rbound starts at end of one divvy unit so it's ahead by one divvy
-    let lbound = 0, rbound = divvy;
-    // Causes invader movement to appear blocky as position updates less often
-    if(frameNum++ >= frameUpper) {
-      invadArr.forEach(function(invader) {
-        invader.newPos(lbound, rbound); // TODO: Build boundaries within invaders
-        invader.draw();
-        // Move boundaries to fit next element
-        lbound += divvy; 
-        rbound += divvy;
-      });
-      frameNum = 0;
-    }
+    if (frameNum ++ >= frameUpper) {
+      frameNum = 0; // Reset frame
+      distR = vRightmost.x + velocity*vRightmost.speedBoost;
+      distL = vLeftmost.x + velocity*vRightmost.speedBoost;
 
-    else {
-      invadArr.forEach(function(invader) {
-        // invader.newPos();
-        invader.draw();// Won't be needed if dirty rectangles implemented
+      // Movement based on canvas collision
+      if(distR + vRightmost.width >= canvasW) { 
+        velocity *= -1;
+      }
+      else if(distL <= 0) {
+        velocity *= -1;
+      }
+
+      invadArr.forEach(function(invader) { 
+        invader.x += velocity * vRightmost.speedBoost;
       });
     }
+    // Redraw
+    invadArr.forEach(function(invader) {
+      invader.draw();// Won't be needed if dirty rectangles implemented
+    });
   }
 }
 
 // Can add new properties at the end of 'speedBoost'
-function playerToken(width, height, color, x, y, velocity, speedBoost) {
+function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1) {
   // playerToken inherits from more generic gamePart class
   gamePart.call(this, width, height, color, x, y, velocity, speedBoost);
   this.prototype = Object.create(gamePart.prototype);
@@ -219,6 +203,9 @@ function playerToken(width, height, color, x, y, velocity, speedBoost) {
       enumerable: false, // so that it does not appear in 'for in' loop
       writable: true 
   });
+
+  this.velocity = velocity;
+  this.speedBoost = speedBoost;
 
   // var canvas = document.getElementById("game-canvas");
   this.newPos = function() {
@@ -235,7 +222,7 @@ function playerToken(width, height, color, x, y, velocity, speedBoost) {
       holding = 'right';
       this.velocity = 1;
     }
-    if(left && right) {
+    if(left && right) { // Special case: player holds both arrows
       if(holding == 'right') { // Was holding right first
         this.velocity = -1; // Most recent is left
       }
@@ -248,7 +235,7 @@ function playerToken(width, height, color, x, y, velocity, speedBoost) {
       }
     }
     if(!right && !left) {
-      holding = '';
+      holding = ''; // Reset, player is not holding either
       this.velocity = 0;
     }
 
