@@ -25,12 +25,12 @@ window.addEventListener('keyup', function(event) {
 
 // Player token's name
 var cassie = new playerToken(40, 40, "red");
-let inv = new invaders();
+let inv = new invaders(totalInvaders = 8, {invaderWidth: 60, invaderHeight: 30}, 
+                       gapSpace = 2, frameRate = 25);
 
 // Object list of which current keys are being pressed (i.e. 'keydown') or not
 var activeKeys = {};
 var holding = '';
-var invaderCount = 0;
 
 // Function that toggles an element's visibility
 const toggle = (elem) => {
@@ -57,11 +57,7 @@ var gameArea = {
     cassie.x = this.canvas.width/2 - cassie.width/2;
     cassie.y = this.canvas.height - cassie.height; // accomodate for object's size
 
-    let numInvaders = 8;
-    let frameRate = 250;
-    vDim = {vaderW: 20, vaderH: 60}; // Invader dimensions
-
-    inv.setup(numInvaders, this.canvas.width, frameRate, vDim);
+    inv.setup(this.canvas.width);
 
     // First argument:  Function that loops while game is active. Updates all game tokens
     // Second argument: Essentially how fast game will be moving (framerate)
@@ -123,38 +119,38 @@ function invaderToken(width, height, color, x, y, velocity, speedBoost = 1) {
   });  
 }
 
-function invaders() {
+function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gapSpace = 20,
+                  frameRate = 250) {
   var invadArr = [];
-  // Default values
-  var invaderCount = 1;
-  var canvasW = 100;
-  var frameUpper = 250;
+
+  // Set invader properties to argument counterpart values
+  this.invaderCount = invaderCount;
+  var vw = invaderWidth;
+  var vh = invaderHeight;
+  var b = gapSpace; // Space between each invader
+  var frameUpper = frameRate;
+
   var frameNum = 0; // Marks the current frame you're on
-  var spaceBetween = 25;
-  var vw, vh; // invader dimensions (width and height)
+
   var vLeftmost, vRightmost;
-  var moveRight = true;
+  // var moveRight = true;
   var velocity = 1;
 
-  this.setup = function(invaderCount = 1, can = 100, frameRate = 250, {vaderH, vaderW}) {
+  this.setup = function(can = 100) {
     invadArr = []; // Make sure invader array is clear
-    // this.invaderCount = invaderCount;
-    this.invaderCount = invaderCount;
-    // this.canvasW = canvasW;
-    canvasW = can;
-    frameUpper = frameRate;
-    frameNum = 0;
-    vw =  vaderW;
-    vh = vaderH;
+    canvasW = can; // Get canvas width from setup method call
+    frameNum = 0; // Reset frame number
+    // moveRight = true;
+
+    // Invader setup and spacing
 
     // Relative space between each invader
-    let b = 60;
     // X Coordinate of next invader acconuting for previous width
-    let next = vaderW + b;
+    let next = vw + b;
     // Space between left most & rightmost invaders and the canvas boundary
     let edgeSpace = (canvasW - invaderCount*vw - b*(invaderCount - 1))/2;
-    let step = edgeSpace/6 - vaderW*invaderCount;
-    let drawAt = edgeSpace;
+    let step = edgeSpace/6 - vw*invaderCount; // Arbitrary (get to evenly go to edge)
+    let drawAt = edgeSpace; // Where to start invaders so group of them is centered
 
     for(let i = 0; i < invaderCount; i ++) {
       invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1, step));
