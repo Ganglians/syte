@@ -25,8 +25,10 @@ window.addEventListener('keyup', function(event) {
 
 // Player token's name
 var cassie = new playerToken(40, 40, "red");
+// Arguments presented as labeled parameters for ease of reading, they serve
+// no purpose otherwise
 let inv = new invaders(totalInvaders = 8, {invaderWidth: 60, invaderHeight: 30}, 
-                       gapSpace = 30, frameRate = 25);
+                       gapSpace = 30, velocity = 1, frameRate = 75);
 
 // Object list of which current keys are being pressed (i.e. 'keydown') or not
 var activeKeys = {};
@@ -77,7 +79,7 @@ var gameArea = {
 
     clearInterval(this.interval); // nothing should be moving/responding
     // invaders
-    invaders = []; // erase invaders 
+    invaders = []; // erase invaders (TODO: Does this need to be here?)
   }
 }
 
@@ -120,7 +122,7 @@ function invaderToken(width, height, color, x, y, velocity, speedBoost = 1) {
 }
 
 function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
-                  gapSpace = 20, frameRate = 250) {
+                  gapSpace = 20, velocity = 1, frameRate = 250) {
   var invadArr = [];
 
   // Set invader properties to argument counterpart values
@@ -129,12 +131,14 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
   var vh = invaderHeight;
 
   var b = gapSpace; // Space [ b ]etween each invader
+  this.velocity = velocity;
   var frameUpper = frameRate;
 
   var frameNum = 0; // Marks the current frame you're on
   var vLeftmost, vRightmost;
   // var moveRight = true;
-  var velocity = 1;
+
+  var wait = 0; // 'turns' (frameRate) invaders must wait before moving again
 
   this.setup = function(can = 100) {
     invadArr = []; // Make sure invader array is clear
@@ -167,37 +171,49 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
   this.move = function() {
     if (frameNum ++ >= frameUpper) {
       frameNum = 0; // Reset frame
-
-      dist = velocity*vRightmost.speedBoost;
-      distR = vRightmost.x + dist;
-      distL = vLeftmost.x + dist;
-
-      // Movement based on canvas collision
-      if(distR + vRightmost.width > canvasW) { 
-        velocity *= -1; // Change directions for next iteration
-        // Calculate distance neede to reach rightmost canvas edge
-        finalDist = canvasW - (vRightmost.x + vRightmost.width);
-
-        invadArr.forEach(function(invader) { 
-          // Move all invaders distance needed for rightmost invader to reach
-          // canvas edge
-          invader.x += finalDist;
-          invader.y += 5;
-        });       
+      if(wait > 0) {
+        if(wait -- > 1) {
+          invadArr.forEach(function(invader) {
+            invader.y += 10;
+          });
+        }
       }
-      else if(distL < 0) {
-        velocity *= -1;
-        finalDist = 0 - vLeftmost.x;
+      else {
+        dist = velocity*vRightmost.speedBoost;
+        distR = vRightmost.x + dist;
+        distL = vLeftmost.x + dist;
 
-        invadArr.forEach(function(invader) {
-          invader.x += finalDist;
-          invader.y += 5;
+        // Movement based on canvas collision
+        if(distR + vRightmost.width > canvasW) { 
+          velocity *= -1; // Change directions for next iteration
+          // Calculate distance neede to reach rightmost canvas edge
+          finalDist = canvasW - (vRightmost.x + vRightmost.width);
+
+          invadArr.forEach(function(invader) { 
+            // Move all invaders distance needed for rightmost invader to reach
+            // canvas edge
+            invader.x += finalDist;
+            // invader.y += 5;
+          });
+
+          wait = 2; // Make invaders wait at corner for two 'turns' (frameRate)
+        }
+        else if(distL < 0) {
+          velocity *= -1;
+          finalDist = 0 - vLeftmost.x;
+
+          invadArr.forEach(function(invader) {
+            invader.x += finalDist;
+            // invader.y += 5;
+          });
+
+          wait = 2;
+        }
+
+        else invadArr.forEach(function(invader) { 
+          invader.x += dist;
         });
       }
-
-      else invadArr.forEach(function(invader) { 
-        invader.x += dist;
-      });
     }
     // Redraw
     invadArr.forEach(function(invader) {
