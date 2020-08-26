@@ -119,19 +119,18 @@ function invaderToken(width, height, color, x, y, velocity, speedBoost = 1) {
   });  
 }
 
-function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gapSpace = 20,
-                  frameRate = 250) {
+function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
+                  gapSpace = 20, frameRate = 250) {
   var invadArr = [];
 
   // Set invader properties to argument counterpart values
   this.invaderCount = invaderCount;
   var vw = invaderWidth;
   var vh = invaderHeight;
-  var b = gapSpace; // Space between each invader
+  var b = gapSpace; // Space [ b ]etween each invader
   var frameUpper = frameRate;
 
   var frameNum = 0; // Marks the current frame you're on
-
   var vLeftmost, vRightmost;
   // var moveRight = true;
   var velocity = 1;
@@ -149,7 +148,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     let next = vw + b;
     // Space between left most & rightmost invaders and the canvas boundary
     let edgeSpace = (canvasW - invaderCount*vw - b*(invaderCount - 1))/2;
-    let step = edgeSpace/6 - vw*invaderCount; // Arbitrary (get to evenly go to edge)
+    let step = edgeSpace/5; // Arbitrary (get to evenly go to edge)
     let drawAt = edgeSpace; // Where to start invaders so group of them is centered
 
     for(let i = 0; i < invaderCount; i ++) {
@@ -171,11 +170,12 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
       distL = vLeftmost.x + velocity*vRightmost.speedBoost;
 
       // Movement based on canvas collision
-      if(distR + vRightmost.width >= canvasW) { 
+      if(distR + vRightmost.width >= canvasW || distL <= 0) { 
         velocity *= -1;
-      }
-      else if(distL <= 0) {
-        velocity *= -1;
+
+        invadArr.forEach(function(invader) { 
+          invader.y += 5;
+        });       
       }
 
       invadArr.forEach(function(invader) { 
