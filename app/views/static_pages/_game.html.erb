@@ -138,7 +138,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
   var vLeftmost, vRightmost;
   // var moveRight = true;
 
-  var wait = 0; // 'turns' (frameRate) invaders must wait before moving again
+  var wait = false; // 'turns' (frameRate) invaders must wait before moving again
 
   this.setup = function(can = 100) {
     invadArr = []; // Make sure invader array is clear
@@ -171,12 +171,12 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
   this.move = function() {
     if (frameNum ++ >= frameUpper) {
       frameNum = 0; // Reset frame
-      if(wait > 0) {
-        if(wait -- > 1) {
-          invadArr.forEach(function(invader) {
-            invader.y += 10;
-          });
-        }
+
+      if(wait) {
+        invadArr.forEach(function(invader) {
+          invader.y += 10;
+        });
+        wait = false;
       }
       else {
         dist = velocity*vRightmost.speedBoost;
@@ -193,10 +193,9 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
             // Move all invaders distance needed for rightmost invader to reach
             // canvas edge
             invader.x += finalDist;
-            // invader.y += 5;
           });
 
-          wait = 2; // Make invaders wait at corner for two 'turns' (frameRate)
+          wait = true; // Make invaders wait at corner for two 'turns' (frameRate)
         }
         else if(distL < 0) {
           velocity *= -1;
@@ -204,10 +203,9 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
 
           invadArr.forEach(function(invader) {
             invader.x += finalDist;
-            // invader.y += 5;
           });
 
-          wait = 2;
+          wait = true;
         }
 
         else invadArr.forEach(function(invader) { 
