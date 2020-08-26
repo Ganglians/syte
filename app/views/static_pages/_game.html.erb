@@ -26,7 +26,7 @@ window.addEventListener('keyup', function(event) {
 // Player token's name
 var cassie = new playerToken(40, 40, "red");
 let inv = new invaders(totalInvaders = 8, {invaderWidth: 60, invaderHeight: 30}, 
-                       gapSpace = 2, frameRate = 25);
+                       gapSpace = 30, frameRate = 25);
 
 // Object list of which current keys are being pressed (i.e. 'keydown') or not
 var activeKeys = {};
@@ -127,6 +127,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
   this.invaderCount = invaderCount;
   var vw = invaderWidth;
   var vh = invaderHeight;
+
   var b = gapSpace; // Space [ b ]etween each invader
   var frameUpper = frameRate;
 
@@ -155,7 +156,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
       invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1, step));
       drawAt += next;
     }
-    // Reference for invaders at both ends
+    // Reference for invaders on both ends of array
     vLeftmost  = invadArr[0];
     vRightmost = invadArr[invadArr.length - 1];
 
@@ -166,20 +167,36 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
   this.move = function() {
     if (frameNum ++ >= frameUpper) {
       frameNum = 0; // Reset frame
-      distR = vRightmost.x + velocity*vRightmost.speedBoost;
-      distL = vLeftmost.x + velocity*vRightmost.speedBoost;
+
+      dist = velocity*vRightmost.speedBoost;
+      distR = vRightmost.x + dist;
+      distL = vLeftmost.x + dist;
 
       // Movement based on canvas collision
-      if(distR + vRightmost.width >= canvasW || distL <= 0) { 
-        velocity *= -1;
+      if(distR + vRightmost.width > canvasW) { 
+        velocity *= -1; // Change directions for next iteration
+        // Calculate distance neede to reach rightmost canvas edge
+        finalDist = canvasW - (vRightmost.x + vRightmost.width);
 
         invadArr.forEach(function(invader) { 
+          // Move all invaders distance needed for rightmost invader to reach
+          // canvas edge
+          invader.x += finalDist;
           invader.y += 5;
         });       
       }
+      else if(distL < 0) {
+        velocity *= -1;
+        finalDist = 0 - vLeftmost.x;
 
-      invadArr.forEach(function(invader) { 
-        invader.x += velocity * vRightmost.speedBoost;
+        invadArr.forEach(function(invader) {
+          invader.x += finalDist;
+          invader.y += 5;
+        });
+      }
+
+      else invadArr.forEach(function(invader) { 
+        invader.x += dist;
       });
     }
     // Redraw
