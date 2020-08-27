@@ -34,23 +34,41 @@ let inv = new invaders(totalInvaders = 8, {invaderWidth: 60, invaderHeight: 30},
 var activeKeys = {};
 var holding = '';
 
+// Stacked: Do not re-initialize invaders if already done before 
+var invadersMem = false;
+// Ensures game only starts every other click (Start, reset-stop, etc.)
+var go = true;
+
 // Function that toggles an element's visibility
 const toggle = (elem) => {
     elem.classList.toggle('hidden');
 }
 
 var gameArea = {
+  tog : function () {
+    if (go == true) {
+      go = false;
+      this.canvas = document.getElementById("game-canvas");
+      toggle(this.canvas);
+      document.getElementById("play-button").innerHTML = "Stop";
+      this.start();
+    }
+    else {
+      go = true;
+      toggle(this.canvas);
+      document.getElementById("demo").innerHTML = "Game stop";
+      document.getElementById("play-button").innerHTML = "Play";
+      this.reset();
+    }
+  },
+
   //cassie = new playerToken(40, 40, red, window.innerWidth/2, window.innerHeight),
   start : function() {
     // Make sure values are at their default when game is starting
-    this.reset();
+    // this.reset();
     this.canvas = document.getElementById("game-canvas");
     // Set demo text to indicate game is starting (for now, just to verify)
     document.getElementById("demo").innerHTML = "Game start";
-
-    // Make canvas visible
-    toggle(this.canvas);
-    // Set up canvas dimensions
     this.canvas.width  = window.innerWidth;
     this.canvas.height = window.innerHeight;
     this.ctx = this.canvas.getContext("2d");
@@ -79,7 +97,9 @@ var gameArea = {
 
     clearInterval(this.interval); // nothing should be moving/responding
     // invaders
-    invaders = []; // erase invaders (TODO: Does this need to be here?)
+    // Stacked: Will not need to reset invaders, there's no point just save them
+    // for next game, they're already here
+    // invaders = []; // erase invaders (TODO: Does this need to be here?)
   }
 }
 
@@ -141,7 +161,9 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
   var wait = false; // 'turns' (frameRate) invaders must wait before moving again
 
   this.setup = function(can = 100) {
-    invadArr = []; // Make sure invader array is clear
+    if(!invadersMem) {
+      invadArr = []; // Make sure invader array is clear
+    }
     canvasW = can; // Get canvas width from setup method call
     frameNum = 0; // Reset frame number
     // moveRight = true;
@@ -156,18 +178,25 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     let step = edgeSpace/5; // Arbitrary (get to evenly go to edge)
     let drawAt = edgeSpace; // Where to start invaders so group of them is centered
 
-    for(let i = 0; i < invaderCount; i ++) {
-      invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1, step));
-      drawAt += next;
+    if(!invadersMem) {
+      for(let i = 0; i < invaderCount; ++ i) { // Create invaders
+        invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1, step));
+        drawAt += next;
+      }
+      invadersMem = true;
+    }
+    else {
+      invadArr.forEach(function(invader) { // Reset invader positioning
+        invader.x = drawAt;
+        invader.y = 0; // Stacked: Need to fix invaders, moving when canvas hidden
+        drawAt += next;
+      });
     }
     // Reference for invaders on both ends of array
     vLeftmost  = invadArr[0];
     vRightmost = invadArr[invadArr.length - 1];
-
-    velocity = 1; // Start off moving to the right
-    vRightmost.speedBoost = 30;
+    vRightmost.speedBoost = 30; // TODO: Replace vRightmost.speedBoost with just an ordinary instance of speedboost (individual invaders might not need a speedboost defined, so it's wasted on them)
   }
-
   this.move = function() {
     if (frameNum ++ >= frameUpper) {
       frameNum = 0; // Reset frame
@@ -215,12 +244,13 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     }
     // Redraw
     invadArr.forEach(function(invader) {
-      invader.draw();// Won't be needed if dirty rectangles implemented
+      invader.draw();// Optimize1, Won't be needed if dirty rectangles 
+                     // implemented
     });
   }
 }
 
-// Can add new properties at the end of 'speedBoost'
+// Optional: With inheritance, can add new properties at the end of 'speedBoost'
 function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1) {
   // playerToken inherits from more generic gamePart class
   gamePart.call(this, width, height, color, x, y, velocity, speedBoost);
@@ -286,14 +316,11 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1) {
 }
 
 function gameFrame() {
-  gameArea.clear(); // TODO: Optimize don't need to clear canvas each time
+  gameArea.clear(); // TODO: Optimize1, don't need to clear canvas each time 
+                    // (rectangles? Note: may be a depreciated concept)
   cassie.newPos();
   cassie.draw();
   inv.move(); 
-}
-
-function gameOn() {
-  gameArea.start();
 }
 </script>
 <noscript>Error: Please download JavaScript for your browser.</noscript>
@@ -328,10 +355,15 @@ function gameOn() {
   }
 </style>
 
+<!-- ------------------------------------------------- -->
 <!-- Add game's canvas, initially hidden because it's only needed when user 
   decides to play the game and clicks play button -->
-<canvas id="game-canvas" class="hidden"> 
+<canvas id="game-canvas" class="hidden">
+<!-- ------------------------------------------------- -->
+<!-- Test: Make canvas visible for testing purposes -->
+<!-- <canvas id="game-canvas">  -->
+<!-- ------------------------------------------------- -->
 Your browser does not support the HTML canvas tag.
 </canvas>
 <!-- Button click event: press to start the game script-->
-<button id="play-button" type="button" onclick="gameArea.start()">Play</button>
+<button id="play-button" type="button" onclick="gameArea.tog()">Play</button>
