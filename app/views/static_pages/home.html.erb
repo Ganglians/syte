@@ -3,9 +3,16 @@
 <!-- class "home" differentiates home page in custom.scss from the stylings of 
   other pages -->
 <div class="home">
-
-<%= render "game" %>
-
+<!-- ------------------------------------------------- -->
+<!-- GAME STRUCTURES -->
+<!-- Add game's canvas, initially hidden because it's only needed when user 
+  decides to play the game and clicks play button -->
+<canvas id="game-canvas" class="hidden">
+Your browser does not support the HTML canvas tag.
+</canvas>
+<!-- Button click event: press to start the game script-->
+<button id="play-button" type="button" onclick="gameArea.tog()">Play</button>
+<!-- ------------------------------------------------- -->
 <div class="hero-one">
 
     <img alt="sun" src="syte_sun.svg" class="sun"/>
@@ -88,3 +95,5 @@
   </div>
 </div>
 </div>
+
+<%= render "game" %>

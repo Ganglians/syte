@@ -14,8 +14,8 @@ window.addEventListener("resize", function(event) {
   }
 });
 
-// 'node' = 'window' in this case
 // Deal with player token's controls 
+// 'node' = 'window' in this case
 window.addEventListener('keydown', function(event) {
   activeKeys[event.key] = true; // Player presses a key, true in array
 });
@@ -39,6 +39,12 @@ var invadersMem = false;
 // Ensures game only starts every other click (Start, reset-stop, etc.)
 var go = true;
 
+var canvas = document.getElementById("game-canvas");
+var ctx = canvas.getContext("2d");
+
+// Keeps record of all shots/bullets
+this.shotKeeper = new shotKeeper();
+
 // Function that toggles an element's visibility
 const toggle = (elem) => {
     elem.classList.toggle('hidden');
@@ -48,14 +54,14 @@ var gameArea = {
   tog : function () {
     if (go == true) {
       go = false;
-      this.canvas = document.getElementById("game-canvas");
-      toggle(this.canvas);
+      // this.canvas = document.getElementById("game-canvas");
+      toggle(canvas);
       document.getElementById("play-button").innerHTML = "Stop";
       this.start();
     }
     else {
       go = true;
-      toggle(this.canvas);
+      toggle(canvas);
       document.getElementById("demo").innerHTML = "Game stop";
       document.getElementById("play-button").innerHTML = "Play";
       this.reset();
@@ -66,29 +72,27 @@ var gameArea = {
   start : function() {
     // Make sure values are at their default when game is starting
     // this.reset();
-    this.canvas = document.getElementById("game-canvas");
+    // this.canvas = document.getElementById("game-canvas");
     // Set demo text to indicate game is starting (for now, just to verify)
     document.getElementById("demo").innerHTML = "Game start";
-    this.canvas.width  = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-    this.ctx = this.canvas.getContext("2d");
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     // Set up player token's positioning
-    cassie.x = this.canvas.width/2 - cassie.width/2;
-    cassie.y = this.canvas.height - cassie.height; // accomodate for object's size
+    cassie.x = canvas.width/2 - cassie.width/2;
+    cassie.y = canvas.height - cassie.height; // accomodate for object's size
 
-    inv.setup(this.canvas.width);
+    inv.setup(canvas.width);
 
     // First argument:  Function that loops while game is active. Updates all game tokens
     // Second argument: Essentially how fast game will be moving (framerate)
     this.interval = setInterval(gameFrame, 5);
+
+    shotKeeper.setup();
   },
 
   clear : function() {
-    // [i] TODO using 'canvas' and 'ctx' in multiple functions of 'gameArea' need to DRY this out
-    this.canvas = document.getElementById("game-canvas");
-    this.ctx = this.canvas.getContext("2d");
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   },
 
   reset: function() {
@@ -96,24 +100,22 @@ var gameArea = {
     //this.clear(); // Might not need this here
 
     clearInterval(this.interval); // nothing should be moving/responding
-    // invaders
-    // Stacked: Will not need to reset invaders, there's no point just save them
-    // for next game, they're already here
-    // invaders = []; // erase invaders (TODO: Does this need to be here?)
   }
 }
 
 // Abstract object 
-function gamePart(width, height, color = "blue", x = 0, y = 0) {
+function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0, 
+                  velocity = 1, speedBoost = 1) {
   this.width = width;
   this.height = height;
   this.color = color;
   // Object position in the (x, y) plane
   this.x = x;
   this.y = y;
+  this.velocity = velocity;
+  this.speedBoost = speedBoost;
 
-  this.draw = function() { // Redraw according to new positioning
-    ctx = gameArea.ctx;   
+  this.draw = function() { // Redraw according to new positioning   
     ctx.fillStyle = color;
     ctx.globalAlpha = 0.7; // Opacity
     ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -171,7 +173,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     // Invader setup and spacing
 
     // Relative space between each invader
-    // X Coordinate of next invader acconuting for previous width
+    // X Coordinate of next invader accounting for previous width
     let next = vw + b;
     // Space between left most & rightmost invaders and the canvas boundary
     let edgeSpace = (canvasW - invaderCount*vw - b*(invaderCount - 1))/2;
@@ -197,6 +199,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     vRightmost = invadArr[invadArr.length - 1];
     vRightmost.speedBoost = 30; // TODO: Replace vRightmost.speedBoost with just an ordinary instance of speedboost (individual invaders might not need a speedboost defined, so it's wasted on them)
   }
+
   this.move = function() {
     if (frameNum ++ >= frameUpper) {
       frameNum = 0; // Reset frame
@@ -236,7 +239,6 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
 
           wait = true;
         }
-
         else invadArr.forEach(function(invader) { 
           invader.x += dist;
         });
@@ -251,7 +253,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
 }
 
 // Optional: With inheritance, can add new properties at the end of 'speedBoost'
-function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1) {
+function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1, fireRate = 100) {
   // playerToken inherits from more generic gamePart class
   gamePart.call(this, width, height, color, x, y, velocity, speedBoost);
   this.prototype = Object.create(gamePart.prototype);
@@ -263,11 +265,12 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1) {
 
   this.velocity = velocity;
   this.speedBoost = speedBoost;
+  var cooldown = 0;
 
   // var canvas = document.getElementById("game-canvas");
   this.newPos = function() {
     // Variables tell what arrow keys are being pressed
-    canvas = document.getElementById("game-canvas");
+    // canvas = document.getElementById("game-canvas");
     right = activeKeys['ArrowRight'];
     left = activeKeys['ArrowLeft'];
     dist = this.x + this.velocity * this.speedBoost;
@@ -313,6 +316,67 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1) {
       this.x = dist;
     }
   }
+
+  this.shoot = function() {
+    space = activeKeys['Enter'];
+
+    if (space && cooldown ++ > fireRate) { 
+      cooldown = 0;
+      shotKeeper.addShot(5, 10, "red", this.x, this.y, 1, 1);
+    }
+  }
+}
+
+function shotKeeper() {
+  // Note: might reset bullet array upon game ending (at least until efficient 
+  // way of storing and re-using them is possibly found)
+  var shots = [];
+
+  this.setup = function() { // Run on game start
+    shots = []; // Resets bullet array
+  }
+
+  // TODO: Is there a way to reference gamePart for this?? They essentially take
+  // the same parameters
+  this.addShot = function(width = 5, height = 15, color = "red", x = 300, 
+                          y = 300, velocity = 1, speedBoost = 1) {
+    this.width = width;
+    this.height = height;
+    this.color = color;
+    this.x = x;
+    this.y = y; 
+    this.velocity = velocity;
+    this.speedBoost = speedBoost;
+                              
+    // var bullet = new gamePart(width, height. color, x, y, velocity, speedBoost);                             
+    shots.push(new gamePart(width, height. color, x, y, velocity, speedBoost));
+  }
+
+  this.remShot = function(shot) { // Removes a single shot from array
+    shots.splice(shot, 1);
+  }
+
+  // Redefine clear/draw to render all the bullets. Probably though can use the
+  // same kind of approach as invaders, defining a 'move' property. If so, then
+  // I can DRY out the methods' code into a single function, and use said 
+  // function in each object class!! <- may be unable to due to how certain
+  // things move, and movement is simply adding/subtracting x and y. The draws
+  // are already DRYed out
+
+  this.move = function() {
+    shots.forEach(function(shot) {
+      //TODO: Add collision check, remove if collision
+      // Delete shot from array if it's no longer in view
+      if(shot.y > canvas.height || shot.y < 0) {
+        shots.splice(shot, 1);
+      }
+      else {
+        shot.draw();
+      }
+      // Movement
+      shot.y += shot.velocity*shot.speedBoost;
+    });
+  }
 }
 
 function gameFrame() {
@@ -320,6 +384,9 @@ function gameFrame() {
                     // (rectangles? Note: may be a depreciated concept)
   cassie.newPos();
   cassie.draw();
+  cassie.shoot();
+
+  shotKeeper.move();
   inv.move(); 
 }
 </script>
@@ -354,16 +421,3 @@ function gameFrame() {
     position: absolute;
   }
 </style>
-
-<!-- ------------------------------------------------- -->
-<!-- Add game's canvas, initially hidden because it's only needed when user 
-  decides to play the game and clicks play button -->
-<canvas id="game-canvas" class="hidden">
-<!-- ------------------------------------------------- -->
-<!-- Test: Make canvas visible for testing purposes -->
-<!-- <canvas id="game-canvas">  -->
-<!-- ------------------------------------------------- -->
-Your browser does not support the HTML canvas tag.
-</canvas>
-<!-- Button click event: press to start the game script-->
-<button id="play-button" type="button" onclick="gameArea.tog()">Play</button>
