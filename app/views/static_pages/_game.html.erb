@@ -41,6 +41,12 @@ var invadersMem = false;
 var go = true;
 
 // Game canvas reference used throughout many object methods
+// Canvas coordinates are as follows:
+// (0,0) -- -- -- >(1,0)
+//      |
+//      |
+//      |
+//      V(0,1)
 var canvas = document.getElementById("game-canvas");
 var ctx = canvas.getContext("2d");
 
@@ -56,17 +62,17 @@ const toggle = (elem) => {
 // Entirety of game's 'screen', where all the visible game pieces are
 var gameArea = {
   tog : function () {
-    if (go == true) {
+    if (go == true) { // Initiate game
       go = false;
       // this.canvas = document.getElementById("game-canvas");
-      // Initiate game, press button again to "stop" the game
       toggle(canvas);
       // Set demo text to indicate game is starting (for now, just to verify)
       document.getElementById("demo").innerHTML = "Game start";
+      // Text on button changed to indicate pressing again ends the game
       document.getElementById("play-button").innerHTML = "Stop";
       this.start();
     }
-    else {
+    else { // End game, reset relevant variables
       go = true;
       // End game, press button again to "play" the game again (as of now, all
       // progress is lost after the currently existing hard reset)
@@ -79,23 +85,29 @@ var gameArea = {
 
   //cassie = new playerToken(40, 40, red, window.innerWidth/2, window.innerHeight),
   start : function() {
+    // PREP
     // Make sure values are at their default when game is starting
     // this.reset();
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
 
     // Set up player token's positioning (bottom-center)
+    // Subtracting(read: displacing) by player token dimensions to accomodate 
+    // for token's size 
     cassie.x = canvas.width/2 - cassie.width/2;
-    cassie.y = canvas.height - cassie.height; // accomodate for object's size
+    cassie.y = canvas.height - cassie.height;
 
+    // Set up initial invader rows (use from stack if previous game played 
+    // already)
     inv.setup();
 
     // Initialize structure that displays bullets
     shotKeeper.setup();
 
+    // START GAME
     // First argument:  Function that loops while game is active. Updates all 
-    // game tokens, essentially the rules and regulations
-    // Second argument: Essentially how fast game will be moving (framerate)
+    // game tokens, essentially the actions along with the rules and regulations
+    // Second argument: How fast game will be moving (framerate)
     this.interval = setInterval(gameFrame, 5);
   },
 
@@ -108,6 +120,7 @@ var gameArea = {
     //this.clear(); // Might not need this here
 
     clearInterval(this.interval); // nothing should be moving/responding
+    //TODO: See if any bullets need to be cleared as well
   }
 }
 
@@ -146,7 +159,7 @@ function invaderToken(width, height, color, x, y, velocity, speedBoost = 1) {
   this.prototype = Object.create(gamePart.prototype);
   Object.defineProperty(this, 'constructor', { 
       value: invaderToken, 
-      enumerable: false, // so that it does not appear in 'for in' loop
+      enumerable: false, // So that it does not appear in 'for in' loop
       writable: true 
   });  
 }
@@ -264,11 +277,12 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
 }
 
 // Optional: With inheritance, can add new properties at the end of 'speedBoost'
-function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1, fireRate = 100) {
+function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1, 
+                     fireRate = 100) {
   // playerToken inherits from more generic gamePart class
   gamePart.call(this, width, height, color, x, y, velocity, speedBoost);
   this.prototype = Object.create(gamePart.prototype);
-  Object.defineProperty(this, 'constructor', { 
+  Object.defineProperty(this, 'constructor', {
       value: playerToken, 
       enumerable: false, // so that it does not appear in 'for in' loop
       writable: true 
@@ -285,6 +299,8 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1, f
     right = activeKeys['ArrowRight'];
     left = activeKeys['ArrowLeft'];
     dist = this.x + this.velocity * this.speedBoost;
+
+    // Controlls
     if (left && !right) {
       holding = 'left';
       this.velocity = -1;
@@ -327,17 +343,23 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1, f
       this.x = dist;
     }
   }
-
+//------------------------------------------------------------------------------
+// Player adds its bullets to the shotKeeper
   this.shoot = function() {
-    space = activeKeys['Enter'];
+    space = activeKeys['Enter']; // Press Enter to shoot
 
-    if (space && cooldown ++ > fireRate) { 
+    if (space && cooldown ++ > fireRate) { // Attempt at limiting bullets / sec
       cooldown = 0;
-      shotKeeper.addShot(5, 10, "red", this.x, this.y, 1, 1);
+      // (x,y) displacement accomodates for token's dimensions
+      // Negative velocity because player's bullets go up
+      shotKeeper.addShot(5, 10, "yellow", this.x + width/2, this.y - height/2, 
+                         -1, 1);
     }
   }
+//------------------------------------------------------------------------------
 }
 
+//------------------------------------------------------------------------------
 function shotKeeper() {
   // Note: might reset bullet array upon game ending (at least until efficient 
   // way of storing and re-using them is possibly found)
@@ -349,21 +371,31 @@ function shotKeeper() {
 
   // TODO: Is there a way to reference gamePart for this?? They essentially take
   // the same parameters
-  this.addShot = function(width = 5, height = 15, color = "red", x = 300, 
-                          y = 300, velocity = 1, speedBoost = 1) {
+  this.addShot = function(width = 5, height = 15, color = "yellow", x = 70, 
+                          y = 70, velocity = 1, speedBoost = 1) {
     this.width = width;
     this.height = height;
     this.color = color;
     this.x = x;
-    this.y = y; 
+    this.y = y;
+
+// x coordinate doesn't seem to affect bullet at all (shouldn't though)
+    // x = 500;
+// y coordinate seems to control where on the x-axis the shot will appear
+    // y = 50; // BUG
     this.velocity = velocity;
     this.speedBoost = speedBoost;
                               
-    // var bullet = new gamePart(width, height. color, x, y, velocity, speedBoost);                             
-    shots.push(new gamePart(width, height. color, x, y, velocity, speedBoost));
-  }
+    // var bullet = new gamePart(width, height. color, x, y, velocity, speedBoost);   
 
-  this.remShot = function(shot) { // Removes a single shot from array
+// BUG: x and y coordinates seem to be in the oposite order
+// -> SOLN(?): height had a period instead of a comma
+
+    shots.push(new gamePart(this.width, this.height, this.color, this.x, this.y, 
+                            this.velocity, this.speedBoost));
+  }
+// Removes a single shot from array
+  this.remShot = function(shot) {
     shots.splice(shot, 1);
   }
 
@@ -389,6 +421,7 @@ function shotKeeper() {
     });
   }
 }
+//------------------------------------------------------------------------------
 
 function gameFrame() {
   gameArea.clear(); // TODO: Optimize1, don't need to clear canvas each time 
