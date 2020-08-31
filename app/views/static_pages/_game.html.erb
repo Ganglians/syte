@@ -1,20 +1,20 @@
 <!-- Game's javascript (place directly for now to reduce compiling time) -->
 <!-- < %= javascript_pack_tag 'game' %> -->
 <script>
-// Resizes game's canvas (A.K.A. 'gameArea') to dynamic page size (i.e. When 
+// LISTENERS
+// Resizes game's canvas (A.K.A. 'gameArea') to dynamic page size (i.e. when 
 // user changes their browser's size)
 window.addEventListener("resize", function(event) {
   canvas = document.getElementById("game-canvas");
-  if (canvas.width  < window.innerWidth) {
+  if (canvas.width  != window.innerWidth) {
     canvas.width  = window.innerWidth;
   }
-
-  if (canvas.height < window.innerHeight) {
+  if (canvas.height != window.innerHeight) {
     canvas.height = window.innerHeight;
   }
 });
 
-// Deal with player token's controls 
+// Player token's controls 
 // 'node' = 'window' in this case
 window.addEventListener('keydown', function(event) {
   activeKeys[event.key] = true; // Player presses a key, true in array
@@ -23,44 +23,53 @@ window.addEventListener('keyup', function(event) {
   activeKeys[event.key] = false; // Player stops pressing key, false in array
 });  
 
+// GLOBAL VARIABLES
 // Player token's name
 var cassie = new playerToken(40, 40, "red");
-// Arguments presented as labeled parameters for ease of reading, they serve
-// no purpose otherwise
+// Arguments presented as labeled parameters for clarity, the names 
+// serve no purpose otherwise
 let inv = new invaders(totalInvaders = 8, {invaderWidth: 60, invaderHeight: 30}, 
                        gapSpace = 30, velocity = 1, frameRate = 75);
 
-// Object list of which current keys are being pressed (i.e. 'keydown') or not
+// Object list of key presses ('keydown'). False for unpressed or missing
 var activeKeys = {};
 var holding = '';
 
 // Stacked: Do not re-initialize invaders if already done before 
 var invadersMem = false;
-// Ensures game only starts every other click (Start, reset-stop, etc.)
+// Ensures game only starts every other click (start -> reset & stop -> start)
 var go = true;
 
+// Game canvas reference used throughout many object methods
 var canvas = document.getElementById("game-canvas");
 var ctx = canvas.getContext("2d");
 
 // Keeps record of all shots/bullets
 this.shotKeeper = new shotKeeper();
 
-// Function that toggles an element's visibility
+// Function that toggles an HTML element's visibility
 const toggle = (elem) => {
-    elem.classList.toggle('hidden');
+  // Adds 'hidden' to element
+  elem.classList.toggle('hidden');
 }
 
+// Entirety of game's 'screen', where all the visible game pieces are
 var gameArea = {
   tog : function () {
     if (go == true) {
       go = false;
       // this.canvas = document.getElementById("game-canvas");
+      // Initiate game, press button again to "stop" the game
       toggle(canvas);
+      // Set demo text to indicate game is starting (for now, just to verify)
+      document.getElementById("demo").innerHTML = "Game start";
       document.getElementById("play-button").innerHTML = "Stop";
       this.start();
     }
     else {
       go = true;
+      // End game, press button again to "play" the game again (as of now, all
+      // progress is lost after the currently existing hard reset)
       toggle(canvas);
       document.getElementById("demo").innerHTML = "Game stop";
       document.getElementById("play-button").innerHTML = "Play";
@@ -72,23 +81,22 @@ var gameArea = {
   start : function() {
     // Make sure values are at their default when game is starting
     // this.reset();
-    // this.canvas = document.getElementById("game-canvas");
-    // Set demo text to indicate game is starting (for now, just to verify)
-    document.getElementById("demo").innerHTML = "Game start";
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // Set up player token's positioning
+    // Set up player token's positioning (bottom-center)
     cassie.x = canvas.width/2 - cassie.width/2;
     cassie.y = canvas.height - cassie.height; // accomodate for object's size
 
-    inv.setup(canvas.width);
+    inv.setup();
 
-    // First argument:  Function that loops while game is active. Updates all game tokens
+    // Initialize structure that displays bullets
+    shotKeeper.setup();
+
+    // First argument:  Function that loops while game is active. Updates all 
+    // game tokens, essentially the rules and regulations
     // Second argument: Essentially how fast game will be moving (framerate)
     this.interval = setInterval(gameFrame, 5);
-
-    shotKeeper.setup();
   },
 
   clear : function() {
@@ -162,11 +170,11 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
 
   var wait = false; // 'turns' (frameRate) invaders must wait before moving again
 
-  this.setup = function(can = 100) {
+  this.setup = function() {
     if(!invadersMem) {
       invadArr = []; // Make sure invader array is clear
     }
-    canvasW = can; // Get canvas width from setup method call
+    canvasW = canvas.width;
     frameNum = 0; // Reset frame number
     // moveRight = true;
 
@@ -190,10 +198,13 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     else {
       invadArr.forEach(function(invader) { // Reset invader positioning
         invader.x = drawAt;
-        invader.y = 0; // Stacked: Need to fix invaders, moving when canvas hidden
+        invader.y = 0;
         drawAt += next;
       });
     }
+    // Reset speed and direction
+    velocity = 1;
+    speedBoost = 1;
     // Reference for invaders on both ends of array
     vLeftmost  = invadArr[0];
     vRightmost = invadArr[invadArr.length - 1];
