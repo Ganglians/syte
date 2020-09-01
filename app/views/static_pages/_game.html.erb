@@ -17,10 +17,10 @@ window.addEventListener("resize", function(event) {
 // Player token's controls 
 // 'node' = 'window' in this case
 window.addEventListener('keydown', function(event) {
-  activeKeys[event.key] = true; // Player presses a key, true in array
+  activeKeys[event.keyCode] = true; // Player presses a key, true in array
 });
 window.addEventListener('keyup', function(event) {
-  activeKeys[event.key] = false; // Player stops pressing key, false in array
+  activeKeys[event.keyCode] = false; // Player stops pressing key, false in array
 });  
 
 // GLOBAL VARIABLES
@@ -34,6 +34,13 @@ let inv = new invaders(totalInvaders = 8, {invaderWidth: 60, invaderHeight: 30},
 // Object list of key presses ('keydown'). False for unpressed or missing
 var activeKeys = {};
 var holding = '';
+
+// Relevant keycodes 
+const Space      = 32; // i.e. The spacebar 
+const ArrowLeft  = 37;
+const ArrowUp    = 38;
+const ArrowRight = 39;
+const ArrowDown  = 40;
 
 // Stacked: Do not re-initialize invaders if already done before 
 var invadersMem = false;
@@ -296,8 +303,8 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1,
   this.newPos = function() {
     // Variables tell what arrow keys are being pressed
     // canvas = document.getElementById("game-canvas");
-    right = activeKeys['ArrowRight'];
-    left = activeKeys['ArrowLeft'];
+    right = activeKeys[ArrowRight];
+    left = activeKeys[ArrowLeft];
     dist = this.x + this.velocity * this.speedBoost;
 
     // Controlls
@@ -346,7 +353,7 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1,
 //------------------------------------------------------------------------------
 // Player adds its bullets to the shotKeeper
   this.shoot = function() {
-    space = activeKeys['Enter']; // Press Enter to shoot
+    space = activeKeys[Space]; // Press Enter to shoot
 
     if (space && cooldown ++ > fireRate) { // Attempt at limiting bullets / sec
       cooldown = 0;
