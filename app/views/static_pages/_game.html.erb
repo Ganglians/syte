@@ -57,13 +57,15 @@ var go = true;
 
 let canvas, ctx; // Set with 'init()' after page is loaded
 
+let startLoop = false; // Starts/stops gameloop
 
 // Keeps record of all shots/bullets
 this.shotKeeper = new shotKeeper();
 
 // Used to display frames per second
 let secondsPassed, oldTimeStamp, fps;
-//                              OBJECTS/METHODS
+
+//                             OBJECTS/FUNCTIONS 
 // Contingency, structurally script will already run after page is loaded
 window.onload = getCanvas; // onload event to set canvas variables
 function getCanvas() {
@@ -83,6 +85,7 @@ var gameArea = {
     if (go == true) { // Initiate game
       go = false;
       // this.canvas = document.getElementById("game-canvas");
+      startLoop = true;
       toggle(canvas);
       // Set demo text to indicate game is starting (for now, just to verify)
       document.getElementById("demo").innerHTML = "Game start";
@@ -92,6 +95,7 @@ var gameArea = {
     }
     else { // End game, reset relevant variables
       go = true;
+      startLoop = false;
       // End game, press button again to "play" the game again (as of now, all
       // progress is lost after the currently existing hard reset)
       toggle(canvas);
@@ -113,7 +117,7 @@ var gameArea = {
     // Subtracting(read: displacing) by player token dimensions to accomodate 
     // for token's size 
     cassie.x = canvas.width/2 - cassie.width/2;
-    cassie.y = canvas.height - cassie.height;
+    cassie.y = canvas.height  - cassie.height;
 
     // Set up initial invader rows (use from stack if previous game played 
     // already)
@@ -128,6 +132,9 @@ var gameArea = {
     // Second argument: How fast game will be moving (framerate)
     // this.interval = setInterval(gameLoop, 16);
 
+    // this.animationFrame = window.requestAnimationFrame(gameLoop);
+
+    startLoop = true;
     window.requestAnimationFrame(gameLoop);
   },
 
@@ -139,8 +146,47 @@ var gameArea = {
     // All settings and game components are at their starting values
     //this.clear(); // Might not need this here
 
-    clearInterval(this.interval); // nothing should be moving/responding
+    // clearInterval(this.interval); // nothing should be moving/responding
+    // clearAnimationFrame(this.animationFrame);
+
   }
+}
+
+function gameLoop(timeStamp) {
+  // Calculate FPS
+  if(!startLoop) {
+    return;
+  }
+
+  secondsPassed = (timeStamp - oldTimeStamp)/1000;
+
+  oldTimeStamp = timeStamp;
+  fps = Math.round(1 / secondsPassed);
+                    
+  cassie.update();
+  cassie.shoot();
+  inv.update();
+  shotKeeper.update();
+
+  gameArea.clear();
+
+  cassie.draw();
+  inv.draw();
+  // shotKeeper.move();
+  shotKeeper.draw();
+  framesPerSecond(); // Just a display
+
+  // Keep requesting further iterations of 'gameLoop' to animate game
+  window.requestAnimationFrame(gameLoop);
+}
+
+function framesPerSecond() { // Displays fps on canvas
+  // Display FPS on canvas                  
+  ctx.fillStyle = "rgba(0, 0, 0, 0)";
+  ctx.fillRect(0, 0, 200, 100);
+  ctx.font = '15px Arial';
+  ctx.fillStyle = 'white';
+  ctx.fillText("fps: " + fps, canvas.width - 50, canvas.height - 10);
 }
 
 //------------------------------------------------------------------------------
@@ -250,7 +296,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     vRightmost.speedBoost = 30; // TODO: Replace vRightmost.speedBoost with just an ordinary instance of speedboost (individual invaders might not need a speedboost defined, so it's wasted on them)
   }
 
-  this.move = function() {
+  this.update = function() { // Update positioning
     if (frameNum ++ >= frameUpper) {
       frameNum = 0; // Reset frame
 
@@ -294,7 +340,9 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
         });
       }
     }
-    // Redraw
+  }
+
+  this.draw = function() {
     invadArr.forEach(function(invader) {
       invader.draw();// Optimize1, Won't be needed if dirty rectangles 
                      // implemented
@@ -318,8 +366,7 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1,
   this.speedBoost = speedBoost;
   var cooldown = 0;
 
-  // var canvas = document.getElementById("game-canvas");
-  this.newPos = function() {
+  this.update = function() {
     // Variables tell what arrow keys are being pressed
     // canvas = document.getElementById("game-canvas");
     right = activeKeys[ArrowRight];
@@ -383,12 +430,14 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1,
   }
 }
 
-function shotKeeper() {
+// Is there a better way to define an object with properties? Because this 
+// function will not be used as a data type or anything
+function shotKeeper() { // Object in charge of keeping tabs on all bullets
   // Note: might reset bullet array upon game ending (at least until efficient 
   // way of storing and re-using them is possibly found)
   var shots = [];
 
-  this.setup = function() { // Run on game start
+  this.setup = function() { // Run1 on game start
     shots = []; // Resets bullet array
   }
 
@@ -424,50 +473,26 @@ function shotKeeper() {
   // function in each object class!! <- may be unable to due to how certain
   // things move, and movement is simply adding/subtracting x and y. The draws
   // are already DRYed out
-
-  this.move = function() {
-    document.getElementById("bull").innerHTML = "bullets: " + shots.length;
+  this.update = function() {
+    //TODO: Add collision check, remove if collision
+    // Delete shot if it leaves canvas (cleanup)
+    // Movement
     shots.forEach(function(shot) {
-      //TODO: Add collision check, remove if collision
-      // Delete shot if it leaves canvas (cleanup)
       if(shot.y > canvas.height || shot.y < 0) {
         shots.splice(shot, 1); 
       }
       else {
-        shot.draw();
+        shot.y += shot.velocity*shot.speedBoost;
       }
-      // Movement
-      shot.y += shot.velocity*shot.speedBoost;
     });
   }
-}
 
-function gameLoop(timeStamp) {
-  // Calculate FPS
-
-  secondsPassed = (timeStamp - oldTimeStamp)/1000;
-  oldTimeStamp = timeStamp;
-
-  fps = Math.round(1 / secondsPassed);
-
-  gameArea.clear(); // TODO: Optimize1, don't need to clear canvas each time 
-                    // (rectangles? Note: may be a depreciated concept)
-  // Display FPS on canvas                  
-  ctx.fillStyle = "rgba(0, 0, 0, 0)";
-  ctx.fillRect(0, 0, 200, 100);
-  ctx.font = '15px Arial';
-  ctx.fillStyle = 'white';
-  ctx.fillText("fps: " + fps, canvas.width - 50, canvas.height - 10);
-                    
-  cassie.newPos();
-  cassie.draw();
-  cassie.shoot();
-
-  shotKeeper.move();
-  inv.move(); 
-
-  // Keep requesting further iterations of 'gameLoop' to animate game
-  window.requestAnimationFrame(gameLoop);
+  this.draw = function() {
+    document.getElementById("bull").innerHTML = "bullets: " + shots.length;
+    shots.forEach(function(shot) {
+      shot.draw();
+    });
+  }
 }
 </script>
 <noscript>Error: Please download JavaScript for your browser.</noscript>
