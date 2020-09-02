@@ -1,7 +1,7 @@
 <!-- Game's javascript (place directly for now to reduce compiling time) -->
 <!-- < %= javascript_pack_tag 'game' %> -->
 <script>
-// LISTENERS
+//                               LISTENERS
 // Resizes game's canvas (A.K.A. 'gameArea') to dynamic page size (i.e. when 
 // user changes their browser's size)
 window.addEventListener("resize", function(event) {
@@ -23,7 +23,7 @@ window.addEventListener('keyup', function(event) {
   activeKeys[event.keyCode] = false; // Player stops pressing key, false in array
 });  
 
-// GLOBAL VARIABLES
+//                             GLOBAL VARIABLES
 // Player token's name
 var cassie = new playerToken(40, 40, "red");
 // Arguments presented as labeled parameters for clarity, the names 
@@ -54,15 +54,26 @@ var go = true;
 //      |
 //      |
 //      V(0,1)
-var canvas = document.getElementById("game-canvas");
-var ctx = canvas.getContext("2d");
+
+let canvas, ctx; // Set with 'init()' after page is loaded
+
 
 // Keeps record of all shots/bullets
 this.shotKeeper = new shotKeeper();
 
+// Used to display frames per second
+let secondsPassed, oldTimeStamp, fps;
+//                              OBJECTS/METHODS
+// Contingency, structurally script will already run after page is loaded
+window.onload = getCanvas; // onload event to set canvas variables
+function getCanvas() {
+  canvas = document.getElementById("game-canvas");
+  ctx = canvas.getContext("2d"); 
+}
+
 // Function that toggles an HTML element's visibility
 const toggle = (elem) => {
-  // Adds 'hidden' to element
+  // Adds or removes 'hidden' class to element
   elem.classList.toggle('hidden');
 }
 
@@ -115,7 +126,9 @@ var gameArea = {
     // First argument:  Function that loops while game is active. Updates all 
     // game tokens, essentially the actions along with the rules and regulations
     // Second argument: How fast game will be moving (framerate)
-    this.interval = setInterval(gameFrame, 5);
+    // this.interval = setInterval(gameLoop, 16);
+
+    window.requestAnimationFrame(gameLoop);
   },
 
   clear : function() {
@@ -127,9 +140,15 @@ var gameArea = {
     //this.clear(); // Might not need this here
 
     clearInterval(this.interval); // nothing should be moving/responding
-    //TODO: See if any bullets need to be cleared as well
   }
 }
+
+//------------------------------------------------------------------------------
+// Create hitbox
+function hitBox() {
+
+}
+//------------------------------------------------------------------------------
 
 // Abstract object 
 function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0, 
@@ -350,8 +369,7 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1,
       this.x = dist;
     }
   }
-//------------------------------------------------------------------------------
-// Player adds its bullets to the shotKeeper
+
   this.shoot = function() {
     space = activeKeys[Space]; // Press Enter to shoot
 
@@ -363,10 +381,8 @@ function playerToken(width, height, color, x, y, velocity = 0, speedBoost = 1,
                          -1, 1);
     }
   }
-//------------------------------------------------------------------------------
 }
 
-//------------------------------------------------------------------------------
 function shotKeeper() {
   // Note: might reset bullet array upon game ending (at least until efficient 
   // way of storing and re-using them is possibly found)
@@ -401,10 +417,6 @@ function shotKeeper() {
     shots.push(new gamePart(this.width, this.height, this.color, this.x, this.y, 
                             this.velocity, this.speedBoost));
   }
-// Removes a single shot from array
-  this.remShot = function(shot) {
-    shots.splice(shot, 1);
-  }
 
   // Redefine clear/draw to render all the bullets. Probably though can use the
   // same kind of approach as invaders, defining a 'move' property. If so, then
@@ -414,11 +426,12 @@ function shotKeeper() {
   // are already DRYed out
 
   this.move = function() {
+    document.getElementById("bull").innerHTML = "bullets: " + shots.length;
     shots.forEach(function(shot) {
       //TODO: Add collision check, remove if collision
-      // Delete shot from array if it's no longer in view
+      // Delete shot if it leaves canvas (cleanup)
       if(shot.y > canvas.height || shot.y < 0) {
-        shots.splice(shot, 1);
+        shots.splice(shot, 1); 
       }
       else {
         shot.draw();
@@ -428,23 +441,39 @@ function shotKeeper() {
     });
   }
 }
-//------------------------------------------------------------------------------
 
-function gameFrame() {
+function gameLoop(timeStamp) {
+  // Calculate FPS
+
+  secondsPassed = (timeStamp - oldTimeStamp)/1000;
+  oldTimeStamp = timeStamp;
+
+  fps = Math.round(1 / secondsPassed);
+
   gameArea.clear(); // TODO: Optimize1, don't need to clear canvas each time 
                     // (rectangles? Note: may be a depreciated concept)
+  // Display FPS on canvas                  
+  ctx.fillStyle = "rgba(0, 0, 0, 0)";
+  ctx.fillRect(0, 0, 200, 100);
+  ctx.font = '15px Arial';
+  ctx.fillStyle = 'white';
+  ctx.fillText("fps: " + fps, canvas.width - 50, canvas.height - 10);
+                    
   cassie.newPos();
   cassie.draw();
   cassie.shoot();
 
   shotKeeper.move();
   inv.move(); 
+
+  // Keep requesting further iterations of 'gameLoop' to animate game
+  window.requestAnimationFrame(gameLoop);
 }
 </script>
 <noscript>Error: Please download JavaScript for your browser.</noscript>
 
-
-<!-- Page body -->
+<!-- ----------------------------------------------------------------------- -->
+                               <!-- Page body -->
 
 <!-- Canvas CSS (keep here for now for ease of editing) -->
 <style>
