@@ -1,6 +1,8 @@
 <!-- Game's javascript (place directly for now to reduce compiling time) -->
 <!-- < %= javascript_pack_tag 'game' %> -->
 <script>
+"use strict";
+
 //_________________________________LISTENERS____________________________________
 // Resizes game's canvas (A.K.A. 'gameArea') to dynamic page size (i.e. when 
 // user changes their browser's size)
@@ -28,9 +30,9 @@ window.addEventListener('keyup', function(event) {
 var cassie = new playerToken(40, 40, "red");
 // Arguments presented as labeled parameters for clarity, the names 
 // serve no purpose otherwise
-let inv = new invaders(totalInvaders = 8, {invaderWidth: 60, invaderHeight: 30}, 
-                       gapSpace = 30, velocity = 1, frameRate = 75);
-
+// let inv = new invaders(totalInvaders = 8, {invaderWidth: 60, invaderHeight: 30}, 
+//                        gapSpace = 30, velocity = 1, frameRate = 75);
+let inv = new invaders(8, {invaderWidth: 60, invaderHeight: 30}, 30, 1, 75);
 // Object list of key presses ('keydown'). False for unpressed or missing
 var activeKeys = {};
 var holding = '';
@@ -63,8 +65,10 @@ let startLoop = false; // Starts/stops gameloop
 this.shotKeeper = new shotKeeper();
 
 // Used to display frames per second
+let timeStamp;
 let secondsPassed = 0, oldTimeStamp = 0, fps;
-let myReq; // Holds the requestId upon calling requestAnimationFrame
+// TODO: Reset timeStamp(?)
+//let reqId; // Holds the requestId upon calling requestAnimationFrame
 
 //______________________________OBJECTS/FUNCTIONS_______________________________ 
 // Contingency, structurally script will already run after page is loaded
@@ -87,7 +91,7 @@ var gameArea = {
       go = false;
       // this.canvas = document.getElementById("game-canvas");
       startLoop = true;
-      toggle(canvas);
+      toggle(canvas); // Make canvas visible
       // Set demo text to indicate game is starting (for now, just to verify)
       document.getElementById("demo").innerHTML = "Game start";
       // Text on button changed to indicate pressing again ends the game
@@ -95,11 +99,14 @@ var gameArea = {
       this.start();
     }
     else { // End game, reset relevant variables
+      // TODO: Reset timeStamp(?)
+      //cancelAnimationFrame(reqId);
+      timeStamp = 0;
       go = true;
       startLoop = false;
       // End game, press button again to "play" the game again (as of now, all
       // progress is lost after the currently existing hard reset)
-      toggle(canvas);
+      toggle(canvas); // Hide canvas
       document.getElementById("demo").innerHTML = "Game stop";
       document.getElementById("play-button").innerHTML = "Play";
       this.reset();
@@ -133,8 +140,7 @@ var gameArea = {
     // Initiate gameLoop, request function gives the browser some air while 
     // looping and time the game loop to be in-sync with the browser repaint
     startLoop = true;
-    this.reqId = window.requestAnimationFrame(gameLoop);
-    //window.cancelAnimationFrame(this.animationFrame);
+    window.requestAnimationFrame(gameLoop);
   },
 
   clear : function() {
@@ -149,21 +155,21 @@ var gameArea = {
     // clearAnimationFrame(this.animationFrame);
     secondsPassed = 0;
     oldTimeStamp  = 0;
-    timeStamp     = 0;
+    timeStamp     = 0; // TODO: Reset timeStamp(?)
   }
 }
 
-function gameLoop(timeStamp) {
-  // Calculate FPS
-  if(!startLoop) {
+function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
+  if(!startLoop) {// Stops loop 
     return;
   }
 
+  // Calculate FPS
   secondsPassed = (timeStamp - oldTimeStamp)/1000;
   oldTimeStamp = timeStamp;
 
-  //fps = Math.round(1000 / secondsPassed);
-                    
+  fps = Math.round(1/secondsPassed);
+
   cassie.update(secondsPassed);
   cassie.shoot();
   inv.update();
@@ -174,10 +180,13 @@ function gameLoop(timeStamp) {
   cassie.draw();
   inv.draw();
   shotKeeper.draw();
-  //framesPerSecond(); // Just a display
-  document.getElementById("demo").innerHTML = "Sec: " + timeStamp;
+  framesPerSecond(); // Just a display
+  // TODO: Reset timeStamp(?)
+  // document.getElementById("demo").innerHTML = "Sec: " + timeStamp;
 
   // Keep requesting further iterations of 'gameLoop' to animate game
+  // TODO: Reset timeStamp(?)
+  // reqId = window.requestAnimationFrame(gameLoop);
   window.requestAnimationFrame(gameLoop);
 }
 
@@ -260,6 +269,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
   var frameNum = 0; // Marks the current frame you're on
   var vLeftmost, vRightmost;
   // var moveRight = true;
+  let magnitude;
 
   var wait = false; // 'turns' (frameRate) invaders must wait before moving again
 
@@ -267,7 +277,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     if(!invadersMem) {
       invadArr = []; // Make sure invader array is clear
     }
-    canvasW = canvas.width;
+    canvas.width = canvas.width;
     frameNum = 0; // Reset frame number
     // moveRight = true;
 
@@ -277,7 +287,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     // X Coordinate of next invader accounting for previous width
     let next = vw + b;
     // Space between left most & rightmost invaders and the canvas boundary
-    let edgeSpace = (canvasW - invaderCount*vw - b*(invaderCount - 1))/2;
+    let edgeSpace = (canvas.width - invaderCount*vw - b*(invaderCount - 1))/2;
     let step = edgeSpace/5; // Arbitrary (get to evenly go to edge)
     let drawAt = edgeSpace; // Where to start invaders so group of them is centered
 
@@ -315,15 +325,15 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
         wait = false;
       }
       else {
-        dist = velocity*vRightmost.magnitude;
-        distR = vRightmost.x + dist;
-        distL = vLeftmost.x + dist;
+        let dist = velocity*vRightmost.magnitude;
+        let distR = vRightmost.x + dist;
+        let distL = vLeftmost.x + dist;
 
         // Movement based on canvas collision
-        if(distR + vRightmost.width > canvasW) { 
+        if(distR + vRightmost.width > canvas.width) { 
           velocity *= -1; // Change directions for next iteration
           // Calculate distance neede to reach rightmost canvas edge
-          finalDist = canvasW - (vRightmost.x + vRightmost.width);
+          let finalDist = canvas.width - (vRightmost.x + vRightmost.width);
 
           invadArr.forEach(function(invader) { 
             // Move all invaders distance needed for rightmost invader to reach
@@ -335,7 +345,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
         }
         else if(distL < 0) {
           velocity *= -1;
-          finalDist = 0 - vLeftmost.x;
+          let finalDist = 0 - vLeftmost.x;
 
           invadArr.forEach(function(invader) {
             invader.x += finalDist;
@@ -352,15 +362,14 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
 
   this.draw = function() {
     invadArr.forEach(function(invader) {
-      invader.draw();// Optimize1, Won't be needed if dirty rectangles 
-                     // implemented
+      invader.draw();
     });
   }
 }
 
 // Optional: With inheritance, can add new properties at the end of 'magnitude'
 function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125, 
-                     fireRate = 5) {
+                     fireRate = 20) {
   // playerToken inherits from more generic gamePart class
   gamePart.call(this, width, height, color, x, y, velocity, magnitude);
   this.prototype = Object.create(gamePart.prototype);
@@ -377,8 +386,8 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125,
   this.update = function(secondsPassed) {
     // Variables tell what arrow keys are being pressed
     // canvas = document.getElementById("game-canvas");
-    right = activeKeys[ArrowRight];
-    left = activeKeys[ArrowLeft];
+    let right = activeKeys[ArrowRight];
+    let left = activeKeys[ArrowLeft];
     // velocity = distance/time_passed * time_passed = distance
     //dist = this.x + this.velocity * this.magnitude * secondsPassed;
     // dist = this.x + this.velocity * this.magnitude;
@@ -412,7 +421,7 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125,
     //--------------------------------------------------------------------------
     // BUG: multiplying velocity by secondsPassed causes player token to not
     // even show up
-    dist = this.x + this.velocity * this.magnitude * secondsPassed;
+    let dist = this.x + this.velocity * this.magnitude * secondsPassed;
     // dist = this.x + this.velocity * this.magnitude;
     //--------------------------------------------------------------------------
     // Stay in canvas' boundaries 
@@ -434,7 +443,7 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125,
   }
 
   this.shoot = function() {
-    space = activeKeys[Space]; // Press Enter to shoot
+    let space = activeKeys[Space]; // Press Enter to shoot
 
     if (space && cooldown ++ > fireRate) { // Attempt at limiting bullets / sec
       cooldown = 0;
