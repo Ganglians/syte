@@ -3,7 +3,7 @@
 <script>
 "use strict";
 
-//_________________________________LISTENERS____________________________________
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~LISTENERS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Resizes game's canvas (A.K.A. 'gameArea') to dynamic page size (i.e. when 
 // user changes their browser's size)
 window.addEventListener("resize", function(event) {
@@ -25,14 +25,14 @@ window.addEventListener('keyup', function(event) {
   activeKeys[event.keyCode] = false; // Player stops pressing key, false in array
 });  
 
-//________________________________GLOBAL VARIABLES______________________________
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~GLOBAL VARIABLES~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Player token's name
 var cassie = new playerToken(40, 40, "red");
 // Arguments presented as labeled parameters for clarity, the names 
 // serve no purpose otherwise
 // let inv = new invaders(totalInvaders = 8, {invaderWidth: 60, invaderHeight: 30}, 
 //                        gapSpace = 30, velocity = 1, frameRate = 75);
-let inv = new invaders(8, {invaderWidth: 60, invaderHeight: 30}, 30, 1, 75);
+var inv = new invaders(8, {invaderWidth: 60, invaderHeight: 30}, 30, 1, 75);
 // Object list of key presses ('keydown'). False for unpressed or missing
 var activeKeys = {};
 var holding = '';
@@ -70,7 +70,13 @@ let secondsPassed = 0, oldTimeStamp = 0, fps;
 // TODO: Reset timeStamp(?)
 //let reqId; // Holds the requestId upon calling requestAnimationFrame
 
-//______________________________OBJECTS/FUNCTIONS_______________________________ 
+//______________________________________________________________________________
+// Moving invadArr property from invaders inv object because for some reason I
+// can't access invadArr as the ovbject's property!
+var invadArr = [];
+//______________________________________________________________________________
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~OBJECTS/FUNCTIONS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 // Contingency, structurally script will already run after page is loaded
 window.onload = getCanvas; // onload event to set canvas variables
 function getCanvas() {
@@ -116,27 +122,19 @@ var gameArea = {
   //cassie = new playerToken(40, 40, red, window.innerWidth/2, window.innerHeight),
   start : function() {
     // PREP
-    // Make sure values are at their default when game is starting
-    // this.reset();
+    // Reset important variables
+    this.reset();
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // Set up player token's positioning (bottom-center)
-    // Subtracting(read: displacing) by player token dimensions to accomodate 
-    // for token's size 
-    cassie.x = canvas.width/2 - cassie.width/2;
-    cassie.y = canvas.height  - cassie.height;
-
-    // Reset important variables
-    this.reset();
-
+    cassie.setup();
     // Set up initial invader rows (use from stack if previous game played 
     // already)
     inv.setup();
-
     // Initialize structure that displays bullets (clears array)
     shotKeeper.setup();
 
+    // LOOP
     // Initiate gameLoop, request function gives the browser some air while 
     // looping and time the game loop to be in-sync with the browser repaint
     startLoop = true;
@@ -160,10 +158,10 @@ var gameArea = {
 }
 
 function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
-  if(!startLoop) {// Stops loop 
+  if(!startLoop) {// Conditional that stops loop 
     return;
   }
-
+  // [ 1 ] UPDATE
   // Calculate FPS
   secondsPassed = (timeStamp - oldTimeStamp)/1000;
   oldTimeStamp = timeStamp;
@@ -171,12 +169,24 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   fps = Math.round(1/secondsPassed);
 
   cassie.update(secondsPassed);
-  cassie.shoot();
-  inv.update();
+  cassie.shoot(); // Add bullets to shotKeeper
+  inv.update(); // TODO: Add secondsPassed for consistency
   shotKeeper.update();
 
+  // [ 2 ] COLLISION DETECTION
+  // cassie.collision();
+  //____________________________________________________________________________  
+  
+  // BUG: CAN'T Access array??????
+  for(let i = 0; i < invadArr.length; ++ i) {
+    shotKeeper.collisionCheck(invadArr[i]);
+  }
+  //____________________________________________________________________________
+
+  // [ 3 ] CLEAR
   gameArea.clear();
 
+  // [ 4 ] DRAW
   cassie.draw();
   inv.draw();
   shotKeeper.draw();
@@ -199,24 +209,39 @@ function framesPerSecond() { // Displays fps on canvas
   ctx.fillText("fps: " + fps, canvas.width - 50, canvas.height - 10);
 }
 
-//------------------------------------------------------------------------------
+//______________________________________________________________________________
 // Create hitbox
-function hitBox() {
-
+// Measures collision between two objects with parallelogramatic bounds
+function collision(object1, object2) {
+  if (object2.x > object1.x + object1.width   || 
+      object1.x > object2.x + object2.width   || 
+      object2.y > object1.y + object1.height  || 
+      object1.y > object2.y + object2.height) {
+      return false;
+  }
+  return true;
 }
-//------------------------------------------------------------------------------
+//______________________________________________________________________________
 
 // Abstract object 
+
 function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0, 
-                  velocity = 1, magnitude = 1) {
-  this.width = width;
+  //____________________________________________________________________________
+  // Add collision boolean parameter
+                  velocity = 1, magnitude = 1, collided = false) {
+  //____________________________________________________________________________
+  this.width  = width;
   this.height = height;
-  this.color = color;
+  this.color  = color;
   // Object position in the (x, y) plane
   this.x = x;
   this.y = y;
-  this.velocity = velocity;
+  this.velocity  = velocity;
   this.magnitude = magnitude;
+  //____________________________________________________________________________
+  // Set collision boolean
+  this.collided = collided;
+  //____________________________________________________________________________
 
   this.setup = function() {
 
@@ -231,20 +256,16 @@ function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0,
     ctx.globalAlpha = 0.7; // Opacity
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
-
-  //----------------------------------------------------------------------------
-  // (?) Determines whether or not one object has intersected another object's 
-  // boundaries 
-  this.collision = function() {
-    // TODO: Might not use hitbox here, specifically 
-  }
-  //----------------------------------------------------------------------------
 }
 
 // Invader's game token
-function invaderToken(width, height, color, x, y, velocity, magnitude = 1) {
+function invaderToken(width, height, color, x, y, velocity, magnitude = 1, 
+  //____________________________________________________________________________
+  // Add collision boolean parameter
+                      collided = false) {
+  //____________________________________________________________________________
   // invaderToken inherits from more generic gamePart class
-  gamePart.call(this, width, height, color, x, y, velocity, magnitude);
+  gamePart.call(this, width, height, color, x, y, velocity, magnitude, collided);
   this.prototype = Object.create(gamePart.prototype);
   Object.defineProperty(this, 'constructor', { 
       value: invaderToken, 
@@ -255,8 +276,9 @@ function invaderToken(width, height, color, x, y, velocity, magnitude = 1) {
 
 function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
                   gapSpace = 20, velocity = 1, frameRate = 250) {
-  var invadArr = [];
-
+  //____________________________________________________________________________
+  // var invadArr = []; // TODO: Access array outside of 'invaders class'
+  //____________________________________________________________________________
   // Set invader properties to argument counterpart values
   this.invaderCount = invaderCount;
   var vw = invaderWidth;
@@ -291,9 +313,13 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     let step = edgeSpace/5; // Arbitrary (get to evenly go to edge)
     let drawAt = edgeSpace; // Where to start invaders so group of them is centered
 
-    if(!invadersMem) {
+    if(!invadersMem) { // (First time) create array of invaders
       for(let i = 0; i < invaderCount; ++ i) { // Create invaders
-        invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1, step));
+        invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1, step,
+        //______________________________________________________________________
+        // Set collision boolean parameter for each new invader token
+                      false));
+        //______________________________________________________________________
         drawAt += next;
       }
       invadersMem = true;
@@ -302,6 +328,10 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
       invadArr.forEach(function(invader) { // Reset invader positioning
         invader.x = drawAt;
         invader.y = 0;
+        //______________________________________________________________________
+        // Reset collision boolean parameter for each invader token
+        invader.collided = false;
+        //______________________________________________________________________
         drawAt += next;
       });
     }
@@ -362,7 +392,9 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
 
   this.draw = function() {
     invadArr.forEach(function(invader) {
-      invader.draw();
+      if(!invader.collided) { // Collided invaders invisible
+        invader.draw();
+      }
     });
   }
 }
@@ -383,12 +415,19 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125,
   this.magnitude = magnitude;
   var cooldown = 0;
 
+  this.setup = function() {
+    // Set up player token's positioning (bottom-center)
+    // Subtracting(read: displacing) by player token dimensions to accomodate 
+    // for token's size 
+    cassie.x = canvas.width/2 - cassie.width/2;
+    cassie.y = canvas.height  - cassie.height;
+  }
+
   this.update = function(secondsPassed) {
     // Variables tell what arrow keys are being pressed
     // canvas = document.getElementById("game-canvas");
     let right = activeKeys[ArrowRight];
     let left = activeKeys[ArrowLeft];
-    // velocity = distance/time_passed * time_passed = distance
     //dist = this.x + this.velocity * this.magnitude * secondsPassed;
     // dist = this.x + this.velocity * this.magnitude;
 
@@ -418,12 +457,9 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125,
       this.velocity = 0;
     }
 
-    //--------------------------------------------------------------------------
-    // BUG: multiplying velocity by secondsPassed causes player token to not
-    // even show up
+    // velocity = distance/time_passed * const * time_passed = distance
     let dist = this.x + this.velocity * this.magnitude * secondsPassed;
-    // dist = this.x + this.velocity * this.magnitude;
-    //--------------------------------------------------------------------------
+
     // Stay in canvas' boundaries 
     if(dist == 0) {
       // Keep in the same place
@@ -469,27 +505,29 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
   // TODO: Is there a way to reference gamePart for this?? They essentially take
   // the same parameters
   this.addShot = function(width = 5, height = 15, color = "yellow", x = 70, 
-                          y = 70, velocity = 1, magnitude = 500) {
+    //__________________________________________________________________________
+    // Add collision boolean parameter
+                      y = 70, velocity = 1, magnitude = 500, collided = false) {
+    //__________________________________________________________________________
     this.width = width;
     this.height = height;
     this.color = color;
     this.x = x;
     this.y = y;
-
-// x coordinate doesn't seem to affect bullet at all (shouldn't though)
-    // x = 500;
-// y coordinate seems to control where on the x-axis the shot will appear
-    // y = 50; // BUG
     this.velocity = velocity;
     this.magnitude = magnitude;
+    //__________________________________________________________________________
+    // Set collision boolean parameter
+    this.collided = collided;
+    //__________________________________________________________________________
                               
     // var bullet = new gamePart(width, height. color, x, y, velocity, magnitude);   
 
-// BUG: x and y coordinates seem to be in the oposite order
-// -> SOLN(?): height had a period instead of a comma
-
     shots.push(new gamePart(this.width, this.height, this.color, this.x, this.y, 
-                            this.velocity, this.magnitude));
+      //________________________________________________________________________
+      // Push collision boolean parameter value
+                            this.velocity, this.magnitude, this.collided));
+     //_________________________________________________________________________
   }
 
   // Redefine clear/draw to render all the bullets. Probably though can use the
@@ -500,7 +538,7 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
   // are already DRYed out
   this.update = function() {
     //TODO: Add collision check, remove if collision
-    // Delete shot if it leaves canvas (cleanup)
+    // Delete individual shot if it leaves canvas (cleanup)
     // Movement
     shots.forEach(function(shot) {
       if(shot.y > canvas.height || shot.y < 0) {
@@ -511,6 +549,24 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
       }
     });
   }
+
+  //____________________________________________________________________________
+  // Add collision method to bullet objects, check if they've collided with any
+  // game tokens
+  this.collisionCheck = function(gameToken) {
+    shots.forEach(function(shot) {
+     let c = collision(shot, gameToken);
+      if (c) {
+        // shot.collided      = true;
+        // Delete bullet if game token not collided with previously
+        if(!gameToken.collided) {
+          shots.splice(shot, 1);
+          gameToken.collided = true;
+        }
+      }
+    });
+  }
+  //____________________________________________________________________________
 
   this.draw = function() {
     document.getElementById("bull").innerHTML = "bullets: " + shots.length;
@@ -549,5 +605,8 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
     /*Temporary border*/
     border: 2px solid #38e3c4;
     position: absolute;
+    /*TODO: Make good scaling*/
+/*    width: 100%;
+    height: 100%;*/
   }
 </style>
