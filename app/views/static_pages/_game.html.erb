@@ -71,6 +71,7 @@ let secondsPassed = 0, oldTimeStamp = 0, fps;
 //let reqId; // Holds the requestId upon calling requestAnimationFrame
 
 //______________________________________________________________________________
+// [Bullet => invadArr(global)]
 // Moving invadArr property from invaders inv object because for some reason I
 // can't access invadArr as the ovbject's property!
 var invadArr = [];
@@ -169,17 +170,22 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   fps = Math.round(1/secondsPassed);
 
   cassie.update(secondsPassed);
-  cassie.shoot(); // Add bullets to shotKeeper
+  cassie.shoot(); // Add bullets to shotKeeper (if any)
   inv.update(); // TODO: Add secondsPassed for consistency
   shotKeeper.update();
 
+  // [Bullet => Check for collision]
   // [ 2 ] COLLISION DETECTION
-  // cassie.collision();
+  // TODO: Cassie
+  // cassie.intersect();
   //____________________________________________________________________________  
-  
+  // [Bullets => iterate invaders]
   // BUG: CAN'T Access array??????
+  // let vaderTotal = inv._getLength();
   for(let i = 0; i < invadArr.length; ++ i) {
-    shotKeeper.collisionCheck(invadArr[i]);
+    // shotKeeper.collisionCheck(invadArr[i]);
+    // shotKeeper.collisionCheck(i); // Check collision with invader @ index i
+    shotKeeper.collisionCheck(i);
   }
   //____________________________________________________________________________
 
@@ -209,27 +215,22 @@ function framesPerSecond() { // Displays fps on canvas
   ctx.fillText("fps: " + fps, canvas.width - 50, canvas.height - 10);
 }
 
-//______________________________________________________________________________
-// Create hitbox
-// Measures collision between two objects with parallelogramatic bounds
-function collision(object1, object2) {
+function intersect(object1, object2) { // Checks if two boxes intersect
   if (object2.x > object1.x + object1.width   || 
       object1.x > object2.x + object2.width   || 
       object2.y > object1.y + object1.height  || 
       object1.y > object2.y + object2.height) {
+
       return false;
   }
+
   return true;
 }
-//______________________________________________________________________________
 
 // Abstract object 
 
 function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0, 
-  //____________________________________________________________________________
-  // Add collision boolean parameter
                   velocity = 1, magnitude = 1, collided = false) {
-  //____________________________________________________________________________
   this.width  = width;
   this.height = height;
   this.color  = color;
@@ -238,16 +239,15 @@ function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0,
   this.y = y;
   this.velocity  = velocity;
   this.magnitude = magnitude;
-  //____________________________________________________________________________
+
   // Set collision boolean
   this.collided = collided;
-  //____________________________________________________________________________
 
-  this.setup = function() {
+  this.setup = function() { // Stub
 
   }
 
-  this.update = function() {
+  this.update = function() { // Stub
 
   }
 
@@ -260,10 +260,7 @@ function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0,
 
 // Invader's game token
 function invaderToken(width, height, color, x, y, velocity, magnitude = 1, 
-  //____________________________________________________________________________
-  // Add collision boolean parameter
                       collided = false) {
-  //____________________________________________________________________________
   // invaderToken inherits from more generic gamePart class
   gamePart.call(this, width, height, color, x, y, velocity, magnitude, collided);
   this.prototype = Object.create(gamePart.prototype);
@@ -276,10 +273,14 @@ function invaderToken(width, height, color, x, y, velocity, magnitude = 1,
 
 function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
                   gapSpace = 20, velocity = 1, frameRate = 250) {
-  //____________________________________________________________________________
-  // var invadArr = []; // TODO: Access array outside of 'invaders class'
-  //____________________________________________________________________________
-  // Set invader properties to argument counterpart values
+  //[LOCAL ARRAY]
+  // Need to make this array accessible to the rest of the objects and their
+  // functons to execute the same as now with it as a global variable (unable to
+  // at the moment, though when testing it on the debug menu the array is 
+  // initialized and everything)
+  //----------------------------------------------------------------------------
+  //var invadArr = [];
+  //----------------------------------------------------------------------------
   this.invaderCount = invaderCount;
   var vw = invaderWidth;
   var vh = invaderHeight;
@@ -294,19 +295,37 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
   let magnitude;
 
   var wait = false; // 'turns' (frameRate) invaders must wait before moving again
+  //[LOCAL ARRAY]
+  //----------------------------------------------------------------------------
+  // Accessor functions for the local invader array
+  // this._getLength = function() { // Array length
+  //   invadArr.length;
+  // }
+
+  // this._getVal = function(index) { // Return value at index
+  //   invadArr[index];
+  // }
+
+  // this._getCollided = function(index) {
+  //   invadArr[index].collided;
+  // }
+
+  // this._setCollided = function(index, _boolean = true) {
+  //   invadArr[index].collided = _boolean;
+  // }
+  //----------------------------------------------------------------------------
 
   this.setup = function() {
     if(!invadersMem) {
-      invadArr = []; // Make sure invader array is clear
+      invadArr = []; // Make sure invader array is clear (sanity check mostly)
     }
     canvas.width = canvas.width;
     frameNum = 0; // Reset frame number
-    // moveRight = true;
 
     // Invader setup and spacing
 
     // Relative space between each invader
-    // X Coordinate of next invader accounting for previous width
+    // X Coordinate of next invader (accounting for previous width)
     let next = vw + b;
     // Space between left most & rightmost invaders and the canvas boundary
     let edgeSpace = (canvas.width - invaderCount*vw - b*(invaderCount - 1))/2;
@@ -316,22 +335,16 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     if(!invadersMem) { // (First time) create array of invaders
       for(let i = 0; i < invaderCount; ++ i) { // Create invaders
         invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1, step,
-        //______________________________________________________________________
-        // Set collision boolean parameter for each new invader token
                       false));
-        //______________________________________________________________________
         drawAt += next;
       }
       invadersMem = true;
     }
-    else {
-      invadArr.forEach(function(invader) { // Reset invader positioning
+    else { // Recycle invader array if it already existed
+      invadArr.forEach(function(invader) { // Default invaders' positioning
         invader.x = drawAt;
         invader.y = 0;
-        //______________________________________________________________________
-        // Reset collision boolean parameter for each invader token
         invader.collided = false;
-        //______________________________________________________________________
         drawAt += next;
       });
     }
@@ -341,7 +354,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     // Reference for invaders on both ends of array
     vLeftmost  = invadArr[0];
     vRightmost = invadArr[invadArr.length - 1];
-    vRightmost.magnitude = 30; // TODO: Replace vRightmost.magnitude with just an ordinary instance of speedboost (individual invaders might not need a speedboost defined, so it's wasted on them)
+    vRightmost.magnitude = 30; // TODO: Replace vRightmost.magnitude with just an ordinary instance of magnitude (individual invaders might not need a speedboost defined, so it's wasted on them)
   }
 
   this.update = function() { // Update positioning
@@ -359,15 +372,15 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
         let distR = vRightmost.x + dist;
         let distL = vLeftmost.x + dist;
 
-        // Movement based on canvas collision
+        // Movement based on canvas boundary collisions
         if(distR + vRightmost.width > canvas.width) { 
           velocity *= -1; // Change directions for next iteration
-          // Calculate distance neede to reach rightmost canvas edge
+          // Calculate distance needed to reach rightmost canvas edge
           let finalDist = canvas.width - (vRightmost.x + vRightmost.width);
 
           invadArr.forEach(function(invader) { 
             // Move all invaders distance needed for rightmost invader to reach
-            // canvas edge
+            // canvas edge (and then move opposite direction next instance)
             invader.x += finalDist;
           });
 
@@ -392,7 +405,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
 
   this.draw = function() {
     invadArr.forEach(function(invader) {
-      if(!invader.collided) { // Collided invaders invisible
+      if(!invader.collided) { // Collided invaders not drawn
         invader.draw();
       }
     });
@@ -431,7 +444,7 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125,
     //dist = this.x + this.velocity * this.magnitude * secondsPassed;
     // dist = this.x + this.velocity * this.magnitude;
 
-    // Controlls
+    // Player token direction based on arrow keys
     if (left && !right) {
       holding = 'left';
       this.velocity = -1;
@@ -442,10 +455,10 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125,
     }
     if(left && right) { // Special case: player holds both arrows
       if(holding == 'right') { // Was holding right first
-        this.velocity = -1; // Most recent is left
+        this.velocity = -1; // Most recent is left, so go left
       }
       if(holding == 'left') { // Was holding left first
-        this.velocity = 1; // Most recent is right
+        this.velocity = 1; // Most recent is right, so go right
       }
       if(holding == '') { // Edge case, pressed both at exact time, choose one
         holding = 'right';
@@ -457,23 +470,21 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125,
       this.velocity = 0;
     }
 
-    // velocity = distance/time_passed * const * time_passed = distance
+    // (velocity = distance/time_passed) * const * time_passed = distance
     let dist = this.x + this.velocity * this.magnitude * secondsPassed;
 
-    // Stay in canvas' boundaries 
-    if(dist == 0) {
-      // Keep in the same place
+    if(dist == 0) { // No movement
+
     }
-    else if(dist < 0) {
+    else if(dist < 0) { // Boundary
       this.x = 0;
     }
-    else if(dist + this.width == canvas.width) {
-      // Keep in the same place
+    else if(dist + this.width == canvas.width) { // Boundary
     }
-    else if(dist + this.width > canvas.width) {
+    else if(dist + this.width > canvas.width) { // Boundary
       this.x = canvas.width - this.width; 
     }
-    else {
+    else { // Move
       this.x = dist;
     }
   }
@@ -504,11 +515,8 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
 
   // TODO: Is there a way to reference gamePart for this?? They essentially take
   // the same parameters
-  this.addShot = function(width = 5, height = 15, color = "yellow", x = 70, 
-    //__________________________________________________________________________
-    // Add collision boolean parameter
-                      y = 70, velocity = 1, magnitude = 500, collided = false) {
-    //__________________________________________________________________________
+  this.addShot = function(width = 5, height = 15, color = "blue", x = 70, y = 70,
+                          velocity = 1, magnitude = 500, collided = false) {
     this.width = width;
     this.height = height;
     this.color = color;
@@ -516,18 +524,11 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
     this.y = y;
     this.velocity = velocity;
     this.magnitude = magnitude;
-    //__________________________________________________________________________
-    // Set collision boolean parameter
     this.collided = collided;
-    //__________________________________________________________________________
                               
     // var bullet = new gamePart(width, height. color, x, y, velocity, magnitude);   
-
     shots.push(new gamePart(this.width, this.height, this.color, this.x, this.y, 
-      //________________________________________________________________________
-      // Push collision boolean parameter value
                             this.velocity, this.magnitude, this.collided));
-     //_________________________________________________________________________
   }
 
   // Redefine clear/draw to render all the bullets. Probably though can use the
@@ -550,18 +551,35 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
     });
   }
 
-  //____________________________________________________________________________
-  // Add collision method to bullet objects, check if they've collided with any
-  // game tokens
-  this.collisionCheck = function(gameToken) {
+  //[LOCAL ARRAY]
+  //----------------------------------------------------------------------------
+  // Make it so that this function can interact with local array by using the
+  // defined accessor methods
+  this.collisionCheck = function(index) {
+  //----------------------------------------------------------------------------
+    let thisVader = invadArr[index];
+    // thisVader = inv._getVal(index); // Get value of current invader
+
     shots.forEach(function(shot) {
-     let c = collision(shot, gameToken);
-      if (c) {
-        // shot.collided      = true;
-        // Delete bullet if game token not collided with previously
-        if(!gameToken.collided) {
+      // T0D0 => way to fix THIS??????????????????????>?>?>?>?>?>?>?>?>?>?>?>?>?
+      //------------------------------------------------------------------------
+      // let collides = intersect(shot, token);
+      //------------------------------------------------------------------------
+      let collides = intersect(shot, thisVader);
+      if (collides) {
+        // shot.collided      = true;``
+        shot.collided = true;
+        // Bullet and invader cancel each other
+        // T0D0 ################################################################
+        // [Bullet => Invader intact?]
+        // if(!token.collided) { 
+        // if(!inv._getCollided(index)) {
+        if(!thisVader.collided) {
           shots.splice(shot, 1);
-          gameToken.collided = true;
+          // [Bullet => collision]
+          invadArr[index].collided = true;
+          // Array setter ------------------------------------------------------
+          // inv._setCollided(index, true);
         }
       }
     });
