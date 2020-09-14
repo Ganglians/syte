@@ -60,7 +60,7 @@ background: linear-gradient(to top, #071957 -5vh, $mid-color, black);
   z-index: 1;
   /*Transparent background*/
   background-color: rgba(0, 0, 0, 0);
-  background-image: image-url('mountains.svg');
+  background-image: image-url('bg_mountains.svg');
   background-repeat: no-repeat;
   /*Can stretch bg image due to adding 'preserveAspectRatio="none"' line to it*/
   background-size: 105vw 20vh;

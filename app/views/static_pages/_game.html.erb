@@ -57,7 +57,10 @@ var go = true;
 //      |
 //      V(0,1)
 
+// Capture values when page loads
 let canvas, ctx; // Set with 'init()' after page is loaded
+// Images
+let token_cassie;
 
 let startLoop = false; // Starts/stops gameloop
 
@@ -70,7 +73,8 @@ let secondsPassed = 0, oldTimeStamp = 0, fps;
 // TODO: Reset timeStamp(?)
 //let reqId; // Holds the requestId upon calling requestAnimationFrame
 
-//______________________________________________________________________________
+// [LOCAL ARRAY]
+//------------------------------------------------------------------------------
 // [Bullet => invadArr(global)]
 // Moving invadArr property from invaders inv object because for some reason I
 // can't access invadArr as the ovbject's property!
@@ -82,7 +86,8 @@ var invadArr = [];
 window.onload = getCanvas; // onload event to set canvas variables
 function getCanvas() {
   canvas = document.getElementById("game-canvas");
-  ctx = canvas.getContext("2d"); 
+  ctx = canvas.getContext("2d");
+  token_cassie = document.getElementById("token_cassie");
 }
 
 // Function that toggles an HTML element's visibility
@@ -173,12 +178,12 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   cassie.shoot(); // Add bullets to shotKeeper (if any)
   inv.update(); // TODO: Add secondsPassed for consistency
   shotKeeper.update();
-
+  // [LOCAL ARRAY]
+  //----------------------------------------------------------------------------
   // [Bullet => Check for collision]
   // [ 2 ] COLLISION DETECTION
   // TODO: Cassie
-  // cassie.intersect();
-  //____________________________________________________________________________  
+  // cassie.intersect(); 
   // [Bullets => iterate invaders]
   // BUG: CAN'T Access array??????
   // let vaderTotal = inv._getLength();
@@ -187,7 +192,7 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
     // shotKeeper.collisionCheck(i); // Check collision with invader @ index i
     shotKeeper.collisionCheck(i);
   }
-  //____________________________________________________________________________
+  //----------------------------------------------------------------------------
 
   // [ 3 ] CLEAR
   gameArea.clear();
@@ -348,6 +353,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
         drawAt += next;
       });
     }
+
     // Reset speed and direction
     velocity = 1;
     magnitude = 1;
@@ -489,6 +495,12 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125,
     }
   }
 
+  this.draw = function() { // Redraw according to new positioning   
+    ctx.fillStyle = color;
+    // ctx.globalAlpha = 0.7; // Opacity
+    ctx.drawImage(token_cassie, this.x, this.y, this.width, this.height);
+  }
+
   this.shoot = function() {
     let space = activeKeys[Space]; // Press Enter to shoot
 
@@ -584,7 +596,6 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
       }
     });
   }
-  //____________________________________________________________________________
 
   this.draw = function() {
     document.getElementById("bull").innerHTML = "bullets: " + shots.length;
