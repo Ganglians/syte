@@ -130,6 +130,7 @@ var gameArea = {
     // PREP
     // Reset important variables
     this.reset();
+    // Update canvas
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -159,7 +160,7 @@ var gameArea = {
     // clearAnimationFrame(this.animationFrame);
     secondsPassed = 0;
     oldTimeStamp  = 0;
-    timeStamp     = 0; // TODO: Reset timeStamp(?)
+    timeStamp     = 0; // TODO: Reset timeStamp(can it be done?)
   }
 }
 
@@ -177,6 +178,7 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   cassie.update(secondsPassed);
   cassie.shoot(); // Add bullets to shotKeeper (if any)
   inv.update(); // TODO: Add secondsPassed for consistency
+  inv.shoot(); //WIP: Gonna edit invaders to move according to time passed
   shotKeeper.update();
   // [LOCAL ARRAY]
   //----------------------------------------------------------------------------
@@ -234,8 +236,7 @@ function intersect(object1, object2) { // Checks if two boxes intersect
 
 // Abstract object 
 
-function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0, 
-                  velocity = 1, magnitude = 1, collided = false) {
+function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0, velocity = 1, magnitude = 1, collided = false) {
   this.width  = width;
   this.height = height;
   this.color  = color;
@@ -264,8 +265,7 @@ function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0,
 }
 
 // Invader's game token
-function invaderToken(width, height, color, x, y, velocity, magnitude = 1, 
-                      collided = false) {
+function invaderToken(width, height, color, x, y, velocity, magnitude = 1, fireRate = 3, collided = false) {
   // invaderToken inherits from more generic gamePart class
   gamePart.call(this, width, height, color, x, y, velocity, magnitude, collided);
   this.prototype = Object.create(gamePart.prototype);
@@ -274,10 +274,21 @@ function invaderToken(width, height, color, x, y, velocity, magnitude = 1,
       enumerable: false, // So that it does not appear in 'for in' loop
       writable: true 
   });  
+
+  var cooldown = 0;
+
+  this.shoot = function () {
+    cooldown += secondsPassed;
+    if(cooldown >= fireRate) {
+      cooldown = 0;
+
+      shotKeeper.addShot(5, 10, "yellow", this.x + width/2, this.y + height + 2, 
+                         1, 125);
+    }
+  }
 }
 
-function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
-                  gapSpace = 20, velocity = 1, frameRate = 250) {
+function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gapSpace = 20, velocity = 1, frameRate = 250) {
   //[LOCAL ARRAY]
   // Need to make this array accessible to the rest of the objects and their
   // functons to execute the same as now with it as a global variable (unable to
@@ -333,23 +344,27 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     let next = vw + b;
     // Space between left most & rightmost invaders and the canvas boundary
     let edgeSpace = (canvas.width - invaderCount*vw - b*(invaderCount - 1))/2;
-    let step = edgeSpace/5; // Arbitrary (get to evenly go to edge)
+    //let step = edgeSpace/5; // Arbitrary (get to evenly go to edge)
     let drawAt = edgeSpace; // Where to start invaders so group of them is centered
 
+    // EACH INDIVIDUAL INVADER
     if(!invadersMem) { // (First time) create array of invaders
       for(let i = 0; i < invaderCount; ++ i) { // Create invaders
-        invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1, step,
-                      false));
+        // invaderToken(width, height, color, x, y, velocity, magnitude = 1, fireRate = 3, collided = false)
+        invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1));
         drawAt += next;
       }
       invadersMem = true;
     }
     else { // Recycle invader array if it already existed
-      invadArr.forEach(function(invader) { // Default invaders' positioning
+      invadArr.forEach(function(invader) {
+        // Reset positioning and other pertinent values
         invader.x = drawAt;
         invader.y = 0;
-        invader.collided = false; // All invaders intact
         drawAt += next;
+
+        invader.collided = false; // All invaders intact
+        invader.cooldown = 0; // Reset time to next shot
       });
     }
 
@@ -409,6 +424,8 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     }
   }
 
+  // Optimization: shoot and draw done in one go of the loop instead of two
+  // (won't have to iterate through loop twice, optimizes by small amount)
   this.draw = function() {
     invadArr.forEach(function(invader) {
       if(!invader.collided) { // Collided invaders not drawn
@@ -416,11 +433,18 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
       }
     });
   }
+
+  this.shoot = function() {
+    invadArr.forEach(function(invader) {
+      if(!invader.collided) { // Collided invaders not drawn
+        invader.shoot();
+      }
+    });
+  }
 }
 
 // Optional: With inheritance, can add new properties at the end of 'magnitude'
-function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125, 
-                     fireRate = 20) {
+function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125, fireRate = 17) {
   // playerToken inherits from more generic gamePart class
   gamePart.call(this, width, height, color, x, y, velocity, magnitude);
   this.prototype = Object.create(gamePart.prototype);
