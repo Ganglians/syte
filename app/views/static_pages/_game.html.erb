@@ -27,7 +27,7 @@ window.addEventListener('keyup', function(event) {
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~GLOBAL VARIABLES~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Player token's name
-var cassie = new playerToken(40, 40, "red");
+var cassie = new playerToken(70, 70, "red");
 // Arguments presented as labeled parameters for clarity, the names 
 // serve no purpose otherwise
 // let inv = new invaders(totalInvaders = 8, {invaderWidth: 60, invaderHeight: 30}, 
@@ -324,11 +324,10 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
     if(!invadersMem) {
       invadArr = []; // Make sure invader array is clear (sanity check mostly)
     }
-    canvas.width = canvas.width;
-    frameNum = 0; // Reset frame number
+    // canvas.width = canvas.width; // Update canvas width
+    frameNum = 0; // Start waiting time from 0
 
-    // Invader setup and spacing
-
+    // SETUP AND SPACING
     // Relative space between each invader
     // X Coordinate of next invader (accounting for previous width)
     let next = vw + b;
@@ -349,14 +348,15 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
       invadArr.forEach(function(invader) { // Default invaders' positioning
         invader.x = drawAt;
         invader.y = 0;
-        invader.collided = false;
+        invader.collided = false; // All invaders intact
         drawAt += next;
       });
     }
 
-    // Reset speed and direction
+    // SPEED AND DIRECTION
     velocity = 1;
     magnitude = 1;
+    wait = false;
     // Reference for invaders on both ends of array
     vLeftmost  = invadArr[0];
     vRightmost = invadArr[invadArr.length - 1];
@@ -374,7 +374,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10},
         wait = false;
       }
       else {
-        let dist = velocity*vRightmost.magnitude;
+        let dist  = velocity * vRightmost.magnitude;
         let distR = vRightmost.x + dist;
         let distL = vLeftmost.x + dist;
 
@@ -496,7 +496,7 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 125,
   }
 
   this.draw = function() { // Redraw according to new positioning   
-    ctx.fillStyle = color;
+    // ctx.fillStyle = color;
     // ctx.globalAlpha = 0.7; // Opacity
     ctx.drawImage(token_cassie, this.x, this.y, this.width, this.height);
   }
@@ -634,6 +634,8 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
     /*Temporary border*/
     border: 2px solid #38e3c4;
     position: absolute;
+    z-index: 0;
+    /*z-index: 1;*/
     /*TODO: Make good scaling*/
 /*    width: 100%;
     height: 100%;*/
