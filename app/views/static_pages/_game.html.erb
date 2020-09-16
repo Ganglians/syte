@@ -275,16 +275,15 @@ function invaderToken(width, height, color, x, y, velocity, magnitude = 1, fireR
       writable: true 
   });  
 
-  var cooldown = 0;
+  var cooldown = 0; // Time to wait until next shot is available
 
   this.shoot = function () {
-    cooldown += secondsPassed;
-    if(cooldown >= fireRate) {
-      cooldown = 0;
 
-      shotKeeper.addShot(5, 10, "yellow", this.x + width/2, this.y + height + 2, 
+
+
+      shotKeeper.addShot(5, 10, "yellow", this.x + width/2, this.y + height + 1, 
                          1, 125);
-    }
+
   }
 }
 
@@ -308,9 +307,10 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
   var frameNum = 0; // Marks the current frame you're on
   var vLeftmost, vRightmost;
   // var moveRight = true;
-  let magnitude;
+  let magnitude = 1;
 
   var wait = false; // 'turns' (frameRate) invaders must wait before moving again
+  var shotChance = 1; // % (chance of shot per movement)
   //[LOCAL ARRAY]
   //----------------------------------------------------------------------------
   // Accessor functions for the local invader array
@@ -437,7 +437,10 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
   this.shoot = function() {
     invadArr.forEach(function(invader) {
       if(!invader.collided) { // Collided invaders not drawn
-        invader.shoot();
+        let shoot = Math.floor(Math.random()*101);
+        if (!wait && shoot < shotChance) {
+          invader.shoot();
+        }
       }
     });
   }
