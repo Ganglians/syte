@@ -219,13 +219,7 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   // cassie.intersect(); 
   // [Bullets => iterate invaders]
 
-  // BUG: CAN'T Access array??????
-  // let vaderTotal = inv._getLength();
-  // for(let i = 0; i < 7; ++ i) { // STANDBY2: invader collision check
-    // // shotKeeper.collisionCheck(invadArr[i]);
-    // shotKeeper.collisionCheck(i); // Check collision with invader @ index i
-    // shotKeeper.collisionCheck(i); // STANDBY2: invader Collision check
-  // } // STANDBY2: invader collision check
+  // BUG: CAN'T Access array if its inside 'invaders' class
 
     // Invader collision check (only first row for now)
     invadarr.a.forEach(function(row){
@@ -440,13 +434,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
             invader.y += 10;
           });
         });
-        // for(let i = 0; i < invadarr.r; i++) {
-        //   // for(let j = 0; j < invadarr.a[i].length(); j ++) {
-        //   // for(let j = 0; j < 7; j ++) {
-        //   for(let j = 0; j < invadarr.a[i].length; j++) {
-        //     invadarr.a[i][j].y += 10;
-        //   }
-        // }
+
         wait = false;
       }
       else {
@@ -467,12 +455,6 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
               invader.x += finalDist;
             });
           });
-          // for(let i = 0; i < invadarr.a.length; i ++) {
-          //   for(let j = 0; j < invadarr.a[i].length; j ++) {
-          //   // for(let j = 0; j < invadarr.totCols(i); j ++) { // BACK
-          //     invadarr.a[i][j].x += finalDist;
-          //   }
-          // }
 
           wait = true; // Make invaders wait at corner for two 'turns' (frameRate)
         }
@@ -487,12 +469,6 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
               invader.x += finalDist;
             });
           });
-          // for(let i = 0; i < invadarr.r; i ++) {
-          //   for(let j = 0; j < invadarr.a[i].length; j ++) {
-          //   // for(let j = 0; j < 7; j ++) {
-          //     invadarr.a[i][j].x += finalDist;
-          //   }
-          // }
 
           wait = true;
         }
@@ -501,14 +477,6 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
             invader.x += dist;
           });
         });
-        // else {
-        //   for(let i = 0; i < invadarr.r; i ++) {
-        //     for(let j = 0; j < invadarr.a[i].length; j ++) {
-        //     // for(let j = 0; j < 7; j ++) {
-        //       invadarr.a[i][j].x += dist;
-        //     }
-        //   }
-        // }
       }
     }
   }
@@ -516,11 +484,6 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
   // Optimization: shoot and draw done in one go of the loop instead of two
   // (won't have to iterate through loop twice, optimizes by small amount)
   this.draw = function() {
-    // invadArr.forEach(function(invader) {
-    //   if(!invader.collided) { // Collided invaders not drawn
-    //     invader.draw();
-    //   }
-    // });
     invadarr.a.forEach(function(row) {
       row.forEach(function(invader) {
         if(!invader.collided) { // Dead invaders not drawn
@@ -528,22 +491,9 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
         }
       });
     });
-    // for(let i = 0; i < invadarr.r; i ++) {
-    //   for(let j = 0; j < invadarr.a[i].length; j ++) {
-    //     invadarr.a[i][j].draw();
-    //   }
-    // }
   }
 
   this.shoot = function() {
-    // invadArr.forEach(function(invader) {
-    //   if(!invader.collided) { // Collided invaders not drawn
-    //     let shoot = Math.floor(Math.random()*101);
-    //     if (!wait && shoot < shotChance) {
-    //       invader.shoot();
-    //     }
-    //   }
-    // });
     invadarr.a.forEach(function(row) {
       row.forEach(function(invader) {
         if(!invader.collided) { // Only non-dead invaders
@@ -554,17 +504,6 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
         }
       });
     });
-    // for(let i = 0; i < invadarr.a[0].length; i ++) {
-    //   // for(let j = 0; j < invadarr.a[i].length(); j ++) {
-    //   for(let j = 0; j < invadarr.totCols(i); j ++) {
-    //     if(!invadar.a[i][j].collided) {
-    //       let shoot = Math.floor(Math.random()*101);
-    //       if (!wait && shoot < shotChance) {
-    //         invader.shoot()
-    //       }
-    //     }
-    //   }
-    // }
   }
 }
 
