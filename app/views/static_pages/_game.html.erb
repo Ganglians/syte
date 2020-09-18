@@ -37,7 +37,7 @@ var inv = new invaders(8, {invaderWidth: 60, invaderHeight: 30}, 30, 1, 75);
 var activeKeys = {};
 var holding = '';
 
-// Relevant keycodes 
+// Listeners' pertinent keycodes 
 const Space      = 32; // i.e. The spacebar 
 const ArrowLeft  = 37;
 const ArrowUp    = 38;
@@ -45,7 +45,7 @@ const ArrowRight = 39;
 const ArrowDown  = 40;
 
 // Stacked: Do not re-initialize invaders if already done before 
-var invadersMem = false;
+// var invadersMem = false; // STANDBY1: Remove while adding features
 // Ensures game only starts every other click (start -> reset & stop -> start)
 var go = true;
 
@@ -78,7 +78,35 @@ let secondsPassed = 0, oldTimeStamp = 0, fps;
 // [Bullet => invadArr(global)]
 // Moving invadArr property from invaders inv object because for some reason I
 // can't access invadArr as the ovbject's property!
-var invadArr = [];
+// var invadArr = [];
+
+//BACK2
+var invadarr = { // 2d invader array
+  // a: {}, // Associative array, doesn't work with lengths and such
+  a: [],
+  r: 0, // total rows
+  totRows: function() {
+    this.r;
+  },
+  totCols: function(rowIndex) { // Total number of columns for given row
+    if(rowIndex < this.r) {
+      return this.a[rowIndex].length;
+    }
+    else {
+      return false; // Out of bounds
+    }
+  },
+  addRows: function(numOf) { // Add specific number of rows
+    for(let i = 0; i < numOf; i ++) {
+      this.a[this.r ++] = [];
+    }
+  },
+  clear: function() {
+    // this.a = {}; // Reset array content
+    this.a = []; // Reset array content
+    this.r = 0; // No rows on empty array
+  }
+};
 //______________________________________________________________________________
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~OBJECTS/FUNCTIONS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
@@ -87,6 +115,7 @@ window.onload = getCanvas; // onload event to set canvas variables
 function getCanvas() {
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
+  // Get predefined element from HTML
   token_cassie = document.getElementById("token_cassie");
 }
 
@@ -108,7 +137,7 @@ var gameArea = {
       document.getElementById("demo").innerHTML = "Game start";
       // Text on button changed to indicate pressing again ends the game
       document.getElementById("play-button").innerHTML = "Stop";
-      this.start();
+      this.start(); // Set variables to start game
     }
     else { // End game, reset relevant variables
       // TODO: Reset timeStamp(?)
@@ -169,16 +198,18 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
     return;
   }
   // [ 1 ] UPDATE
-  // Calculate FPS
+  // Calculate FPS (for the display)
   secondsPassed = (timeStamp - oldTimeStamp)/1000;
   oldTimeStamp = timeStamp;
 
   fps = Math.round(1/secondsPassed);
 
   cassie.update(secondsPassed);
-  cassie.shoot(); // Add bullets to shotKeeper (if any)
-  inv.update(); // TODO: Add secondsPassed for consistency
-  inv.shoot(); //WIP: Gonna edit invaders to move according to time passed
+  cassie.shoot(); // Update shotkeeper with any bullets player shot
+  // TODO: Add secondsPassed for consistency
+  //WIP: Gonna edit invaders to move according to time passed
+  inv.update();
+  inv.shoot();
   shotKeeper.update();
   // [LOCAL ARRAY]
   //----------------------------------------------------------------------------
@@ -187,13 +218,21 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   // TODO: Cassie
   // cassie.intersect(); 
   // [Bullets => iterate invaders]
+
   // BUG: CAN'T Access array??????
   // let vaderTotal = inv._getLength();
-  for(let i = 0; i < invadArr.length; ++ i) {
-    // shotKeeper.collisionCheck(invadArr[i]);
+  // for(let i = 0; i < 7; ++ i) { // STANDBY2: invader collision check
+    // // shotKeeper.collisionCheck(invadArr[i]);
     // shotKeeper.collisionCheck(i); // Check collision with invader @ index i
-    shotKeeper.collisionCheck(i);
-  }
+    // shotKeeper.collisionCheck(i); // STANDBY2: invader Collision check
+  // } // STANDBY2: invader collision check
+
+    // Invader collision check (only first row for now)
+    invadarr.a.forEach(function(row){
+      row.forEach(function(invader) {
+        shotKeeper.collisionCheck(invader);
+      });
+    });
   //----------------------------------------------------------------------------
 
   // [ 3 ] CLEAR
@@ -297,6 +336,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
   //var invadArr = [];
   //----------------------------------------------------------------------------
   this.invaderCount = invaderCount;
+  // invadarr.c = invaderCount; // Number of invaders per row (read: columns)
   var vw = invaderWidth;
   var vh = invaderHeight;
 
@@ -332,9 +372,10 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
   //----------------------------------------------------------------------------
 
   this.setup = function() {
-    if(!invadersMem) {
-      invadArr = []; // Make sure invader array is clear (sanity check mostly)
-    }
+    // if(!invadersMem) { // STANDBY1: ignored for now
+      invadarr.clear(); // Make sure invader array is clear (sanity check mostly)
+      // invadarr.a = [];
+    // } STANDBY1
     // canvas.width = canvas.width; // Update canvas width
     frameNum = 0; // Start waiting time from 0
 
@@ -347,34 +388,45 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     //let step = edgeSpace/5; // Arbitrary (get to evenly go to edge)
     let drawAt = edgeSpace; // Where to start invaders so group of them is centered
 
+    invadarr.addRows(2); // two rows
+
     // EACH INDIVIDUAL INVADER
-    if(!invadersMem) { // (First time) create array of invaders
-      for(let i = 0; i < invaderCount; ++ i) { // Create invaders
+    // if(!invadersMem) { // STANDBY1 (First time) create array of invaders
+      // Populate with invaderCount number of invaders
+      for(let i = 0; i < invaderCount; ++ i) {
         // invaderToken(width, height, color, x, y, velocity, magnitude = 1, fireRate = 3, collided = false)
-        invadArr.push(new invaderToken(vw, vh, "green", drawAt, 0, 1));
+        // invadarr.a[invadarr.r, invadarr.c] = "hi";
+        //BACK2
+        invadarr.a[0].push(new invaderToken(vw, vh, "green", drawAt, 0, 1));
+        // invadarr.a[0][i] = new invaderToken(vw, vh, "green", drawAt, 0, 1);
+
+        // Another row in front of previous row (y + 50)
+        invadarr.a[1].push(new invaderToken(vw, vh, "green", drawAt, 50, 1));
+        // invadarr.a[1][i] = new invaderToken(vw, vh, "green", drawAt, 50, 1);
+
         drawAt += next;
       }
-      invadersMem = true;
-    }
-    else { // Recycle invader array if it already existed
-      invadArr.forEach(function(invader) {
-        // Reset positioning and other pertinent values
-        invader.x = drawAt;
-        invader.y = 0;
-        drawAt += next;
+      // invadersMem = true; // STANDBY1
+    // } // STANDBY1: invadersMem on standby
+    // else { // Recycle invader array if it already existed
+    //   // invadArr.forEach(function(invader) {
+    //   //   // Reset positioning and other pertinent values
+    //   //   invader.x = drawAt;
+    //   //   invader.y = 0;
+    //   //   drawAt += next;
 
-        invader.collided = false; // All invaders intact
-        invader.cooldown = 0; // Reset time to next shot
-      });
-    }
+    //   //   invader.collided = false; // All invaders intact
+    //   //   invader.cooldown = 0; // Reset time to next shot
+    //   // });
+    // }
 
     // SPEED AND DIRECTION
     velocity = 1;
     magnitude = 1;
     wait = false;
     // Reference for invaders on both ends of array
-    vLeftmost  = invadArr[0];
-    vRightmost = invadArr[invadArr.length - 1];
+    vLeftmost = invadarr.a[0][0];
+    vRightmost = invadarr.a[0][invadarr.a[0].length - 1];
     vRightmost.magnitude = 30; // TODO: Replace vRightmost.magnitude with just an ordinary instance of magnitude (individual invaders might not need a speedboost defined, so it's wasted on them)
   }
 
@@ -382,10 +434,19 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     if (frameNum ++ >= frameUpper) {
       frameNum = 0; // Reset frame
 
-      if(wait) {
-        invadArr.forEach(function(invader) {
-          invader.y += 10;
+      if(wait) { // move forward
+        invadarr.a.forEach(function(row){
+          row.forEach(function(invader) {
+            invader.y += 10;
+          });
         });
+        // for(let i = 0; i < invadarr.r; i++) {
+        //   // for(let j = 0; j < invadarr.a[i].length(); j ++) {
+        //   // for(let j = 0; j < 7; j ++) {
+        //   for(let j = 0; j < invadarr.a[i].length; j++) {
+        //     invadarr.a[i][j].y += 10;
+        //   }
+        // }
         wait = false;
       }
       else {
@@ -399,27 +460,55 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
           // Calculate distance needed to reach rightmost canvas edge
           let finalDist = canvas.width - (vRightmost.x + vRightmost.width);
 
-          invadArr.forEach(function(invader) { 
-            // Move all invaders distance needed for rightmost invader to reach
-            // canvas edge (and then move opposite direction next instance)
-            invader.x += finalDist;
+          // Move all invaders distance needed for rightmost invader to reach
+          // canvas edge (and then move opposite direction in the next instance)
+          invadarr.a.forEach(function(row) {
+            row.forEach(function(invader) {
+              invader.x += finalDist;
+            });
           });
+          // for(let i = 0; i < invadarr.a.length; i ++) {
+          //   for(let j = 0; j < invadarr.a[i].length; j ++) {
+          //   // for(let j = 0; j < invadarr.totCols(i); j ++) { // BACK
+          //     invadarr.a[i][j].x += finalDist;
+          //   }
+          // }
 
           wait = true; // Make invaders wait at corner for two 'turns' (frameRate)
         }
-        else if(distL < 0) {
+
+        else if(distL < 0) { // would cross the left boundary
           velocity *= -1;
+          // move final distance to reach canvas' left boundary
           let finalDist = 0 - vLeftmost.x;
 
-          invadArr.forEach(function(invader) {
-            invader.x += finalDist;
+          invadarr.a.forEach(function(row) {
+            row.forEach(function(invader) {
+              invader.x += finalDist;
+            });
           });
+          // for(let i = 0; i < invadarr.r; i ++) {
+          //   for(let j = 0; j < invadarr.a[i].length; j ++) {
+          //   // for(let j = 0; j < 7; j ++) {
+          //     invadarr.a[i][j].x += finalDist;
+          //   }
+          // }
 
           wait = true;
         }
-        else invadArr.forEach(function(invader) { 
-          invader.x += dist;
+        else invadarr.a.forEach(function(row){ // Advance like normal
+          row.forEach(function(invader){
+            invader.x += dist;
+          });
         });
+        // else {
+        //   for(let i = 0; i < invadarr.r; i ++) {
+        //     for(let j = 0; j < invadarr.a[i].length; j ++) {
+        //     // for(let j = 0; j < 7; j ++) {
+        //       invadarr.a[i][j].x += dist;
+        //     }
+        //   }
+        // }
       }
     }
   }
@@ -427,22 +516,55 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
   // Optimization: shoot and draw done in one go of the loop instead of two
   // (won't have to iterate through loop twice, optimizes by small amount)
   this.draw = function() {
-    invadArr.forEach(function(invader) {
-      if(!invader.collided) { // Collided invaders not drawn
-        invader.draw();
-      }
+    // invadArr.forEach(function(invader) {
+    //   if(!invader.collided) { // Collided invaders not drawn
+    //     invader.draw();
+    //   }
+    // });
+    invadarr.a.forEach(function(row) {
+      row.forEach(function(invader) {
+        if(!invader.collided) { // Dead invaders not drawn
+          invader.draw();
+        }
+      });
     });
+    // for(let i = 0; i < invadarr.r; i ++) {
+    //   for(let j = 0; j < invadarr.a[i].length; j ++) {
+    //     invadarr.a[i][j].draw();
+    //   }
+    // }
   }
 
   this.shoot = function() {
-    invadArr.forEach(function(invader) {
-      if(!invader.collided) { // Collided invaders not drawn
-        let shoot = Math.floor(Math.random()*101);
-        if (!wait && shoot < shotChance) {
-          invader.shoot();
+    // invadArr.forEach(function(invader) {
+    //   if(!invader.collided) { // Collided invaders not drawn
+    //     let shoot = Math.floor(Math.random()*101);
+    //     if (!wait && shoot < shotChance) {
+    //       invader.shoot();
+    //     }
+    //   }
+    // });
+    invadarr.a.forEach(function(row) {
+      row.forEach(function(invader) {
+        if(!invader.collided) { // Only non-dead invaders
+          // "la chance" is French for "luck"
+          let laChance = Math.floor(Math.random()*101);
+          if(!wait && laChance < shotChance) 
+            invader.shoot();
         }
-      }
+      });
     });
+    // for(let i = 0; i < invadarr.a[0].length; i ++) {
+    //   // for(let j = 0; j < invadarr.a[i].length(); j ++) {
+    //   for(let j = 0; j < invadarr.totCols(i); j ++) {
+    //     if(!invadar.a[i][j].collided) {
+    //       let shoot = Math.floor(Math.random()*101);
+    //       if (!wait && shoot < shotChance) {
+    //         invader.shoot()
+    //       }
+    //     }
+    //   }
+    // }
   }
 }
 
@@ -584,7 +706,7 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
       if(shot.y > canvas.height || shot.y < 0) {
         shots.splice(shot, 1); 
       }
-      else {
+      else { // advance
         shot.y += shot.velocity*shot.magnitude*secondsPassed;
       }
     });
@@ -594,29 +716,29 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
   //----------------------------------------------------------------------------
   // Make it so that this function can interact with local array by using the
   // defined accessor methods
-  this.collisionCheck = function(index) {
+  this.collisionCheck = function(token) {
   //----------------------------------------------------------------------------
-    let thisVader = invadArr[index];
-    // thisVader = inv._getVal(index); // Get value of current invader
+    // STANDBY3: Only pay attention to front row for now
+    // let thisVader = invadarr.a[1][index]; // get value of invader in question
 
     shots.forEach(function(shot) {
       // T0D0 => way to fix THIS??????????????????????>?>?>?>?>?>?>?>?>?>?>?>?>?
       //------------------------------------------------------------------------
       // let collides = intersect(shot, token);
       //------------------------------------------------------------------------
-      let collides = intersect(shot, thisVader);
+      let collides = intersect(shot, token);
       if (collides) {
-        // shot.collided      = true;``
         shot.collided = true;
         // Bullet and invader cancel each other
         // T0D0 ################################################################
         // [Bullet => Invader intact?]
         // if(!token.collided) { 
         // if(!inv._getCollided(index)) {
-        if(!thisVader.collided) {
-          shots.splice(shot, 1);
+        if(!token.collided) {
+          shots.splice(shot, 1); // Intact token disappears along with bullet
           // [Bullet => collision]
-          invadArr[index].collided = true;
+          // invadarr.a[1][index].collided = true;
+          token.collided = true;
           // Array setter ------------------------------------------------------
           // inv._setCollided(index, true);
         }
