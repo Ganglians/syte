@@ -45,7 +45,7 @@ const ArrowRight = 39;
 const ArrowDown  = 40;
 
 // Stacked: Do not re-initialize invaders if already done before 
-// var invadersMem = false; // STANDBY1: Remove while adding features
+var invadersMem = false; // STANDBY1: Remove while adding features
 // Ensures game only starts every other click (start -> reset & stop -> start)
 var go = true;
 
@@ -366,11 +366,11 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
   //----------------------------------------------------------------------------
 
   this.setup = function() {
-    // if(!invadersMem) { // STANDBY1: ignored for now
+    if(!invadersMem) { // STANDBY1: ignored for now
       invadarr.clear(); // Make sure invader array is clear (sanity check mostly)
       // invadarr.a = [];
-    // } STANDBY1
-    // canvas.width = canvas.width; // Update canvas width
+    } //STANDBY1
+
     frameNum = 0; // Start waiting time from 0
 
     // SETUP AND SPACING
@@ -381,17 +381,18 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     let edgeSpace = (canvas.width - invaderCount*vw - b*(invaderCount - 1))/2;
     //let step = edgeSpace/5; // Arbitrary (get to evenly go to edge)
     let drawAt = edgeSpace; // Where to start invaders so group of them is centered
-
+    let y = 0; // y positioning (increments of 50 at the moment)
     invadarr.addRows(2); // two rows
 
     // EACH INDIVIDUAL INVADER
-    // if(!invadersMem) { // STANDBY1 (First time) create array of invaders
+    if(!invadersMem) { // STANDBY1 (First time) create array of invaders
       // Populate with invaderCount number of invaders
       for(let i = 0; i < invaderCount; ++ i) {
         // invaderToken(width, height, color, x, y, velocity, magnitude = 1, fireRate = 3, collided = false)
         // invadarr.a[invadarr.r, invadarr.c] = "hi";
         //BACK2
         invadarr.a[0].push(new invaderToken(vw, vh, "green", drawAt, 0, 1));
+        // Associative array only
         // invadarr.a[0][i] = new invaderToken(vw, vh, "green", drawAt, 0, 1);
 
         // Another row in front of previous row (y + 50)
@@ -400,19 +401,30 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
 
         drawAt += next;
       }
-      // invadersMem = true; // STANDBY1
-    // } // STANDBY1: invadersMem on standby
-    // else { // Recycle invader array if it already existed
-    //   // invadArr.forEach(function(invader) {
-    //   //   // Reset positioning and other pertinent values
-    //   //   invader.x = drawAt;
-    //   //   invader.y = 0;
-    //   //   drawAt += next;
+      invadersMem = true; // STANDBY1
+    } // STANDBY1: invadersMem on standby
+    else { // Recycle invader array if it already existed
+      // invadArr.forEach(function(invader) {
+      //   // Reset positioning and other pertinent values
+      //   invader.x = drawAt;
+      //   invader.y = 0;
+      //   drawAt += next;
 
-    //   //   invader.collided = false; // All invaders intact
-    //   //   invader.cooldown = 0; // Reset time to next shot
-    //   // });
-    // }
+      //   invader.collided = false; // All invaders intact
+      //   invader.cooldown = 0; // Reset time to next shot
+      // });
+
+      invadarr.a.forEach(function(row) {
+        row.forEach(function(invader) {
+          // Reset positioning and other pertinent values
+          invader.x = drawAt;
+          invader.y = y;
+          drawAt += next;
+        });
+        drawAt = edgeSpace;
+        y += 50;
+      });
+    }
 
     // SPEED AND DIRECTION
     velocity = 1;
@@ -494,9 +506,9 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
   }
 
   this.shoot = function() {
-    invadarr.a.forEach(function(row) {
+    invadarr.a.forEach(function(row, index) {
       row.forEach(function(invader) {
-        if(!invader.collided) { // Only non-dead invaders
+        if(!invader.collided && index == 1) { // Only non-dead invaders
           // "la chance" is French for "luck"
           let laChance = Math.floor(Math.random()*101);
           if(!wait && laChance < shotChance) 
