@@ -28,13 +28,6 @@ window.addEventListener("resize", function(event) {
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
 });
-// Attempt at reading total number of bullets at all times (WiP - displays
-// zero atm)
-//==============================================================================
-// window.addEventListener("load", function(event) {
-//   document.getElementById("bull").innerHTML = "bullets: " + shots.length;
-// });
-//==============================================================================
 
 // Resize canvas from the get-go
 window.addEventListener("load", function(event) { 
@@ -106,18 +99,6 @@ let secondsPassed = 0, oldTimeStamp = 0, fps;
 // TODO: Reset timeStamp(?)
 let reqId; // Holds the requestId upon calling requestAnimationFrame
 
-//==============================================================================
-//CVIS make every other game start a different bullet color
-let _BC = "pink";
-let _mark = 0;
-
-// Check to see if the issue is with the timeStamp and its initial value of zero
-// (seeing that the first time the game loads a bunch of seconds have passed it
-// could be the reason for the first row advancing like that)
-let first = true;
-let gameStart = 0;
-//==============================================================================
-
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~OBJECTS/FUNCTIONS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Images
 //REP1
@@ -157,6 +138,7 @@ var renderer = (function() {
     // TODO: Move the gloval canvas variables here
     // var canvas = document.getElementById("game-canvas");
     // var context = canvas.getContext("2d");
+
     // var i,
     //     entity,
     //     entities = gameArea.entities(); // get tokens
@@ -198,16 +180,6 @@ function getCanvas() {
 const toggle = (elem) => {
   // Adds or removes 'hidden' class to element
   elem.classList.toggle('hidden');
-//==============================================================================
-// CVIS change bullet color every other game (WiP)
-  if(_mark ++ > 1) {
-    _BC = "orange";
-    _mark = 0;
-  }
-  else {
-    _BC = "pink";
-  }
-//==============================================================================
 }
 
 // Entirety of game's 'screen', where all the visible game pieces are
@@ -216,16 +188,7 @@ var gameArea = (function() { // Singleton
 
   function _tog() {
     //BUG1
-    if (go == true) { // Initiate game
-  // Attempt at setting the initial time passed to zero by setting the old time
-  // stamp to the new one when the game first starts
-// //==============================================================================
-      // if(first) {
-      //   // oldTimeStamp = timeStamp;
-      //   gameStart = timeStamp;
-      //   first = false;
-      // }
-// //==============================================================================     
+    if (go == true) { // Initiate game    
       go = false;
       startLoop = true;
       toggle(canvas); // Make canvas visible
@@ -237,10 +200,6 @@ var gameArea = (function() { // Singleton
     } //BUG1 
     else { // End game, reset relevant variables
       // TODO: Reset timeStamp(?)
-      //BUG1: Culprit??? -> Doesn't seem to be the case
-//==============================================================================
-      // cancelAnimationFrame(reqId);
-//==============================================================================
       timeStamp = 0;
       go = true;
       startLoop = false;
@@ -280,7 +239,6 @@ var gameArea = (function() { // Singleton
     // looping and time the game loop to be in-sync with the browser repaint
     startLoop = true;
     window.requestAnimationFrame(gameLoop);
-    reqId = window.requestAnimationFrame(gameLoop); // BUG1 cancel maybe works?
   }
 
   function _clear() {
@@ -311,29 +269,13 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   if(!startLoop) {// Conditional that stops loop 
     return;
   }
-//==============================================================================
-  if(first) {
-    secondsPassed = 0;
-    first = false;
-  }
-//==============================================================================
   // [ 1 ] UPDATE
-  // Calculate FPS (for the display)
-//==============================================================================
-  else {
   secondsPassed = (timeStamp - oldTimeStamp)/1000;
-  // // Limit time factor to a max of 0.1 to avoid movement correction of too fast a
-  // // speed (would break the game)
-  // There was a significant gap in time from the execution of the game to get to the first frame compared to the gap in time from the first frame to the second frame when you consider the game didn’t start immediately upon the site loading (you have to click the play button). This means the first frame took a longer time to execute than the ones that come after.
-  // Bug was the script trying to make everything move at ‘the same speed’ which takes into account how long the time was between each frame (usually a predetermined amount of time which is relatively small, however long it takes for browser to request new frame, hence the smooth animation with requestAnimationFrame), this implies that when the page was loaded, the time was already being counted, however, since the first bullets weren’t shot immediately, the script hadn’t executed yet, the game tried to compensate for the first bullets’ lack of initial movement by moving them a large distance ahead to make it ‘look’ like they had been moving at the same ‘speed’ as their successors. Hence, the broken game logic. 
   secondsPassed = Math.min(0.1, secondsPassed);
-  // secondsPassed = (timeStamp-oldTimeStamp)/1000;
-  //===
   oldTimeStamp = timeStamp;
-  }
-//==============================================================================
 
-  // fps = Math.round(1/secondsPassed);
+  // Calculate FPS (for the display)
+  fps = Math.round(1/secondsPassed);
 
   cassie.update(secondsPassed);
   cassie.shoot(); // Update shotkeeper with any bullets player shot
@@ -345,9 +287,9 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
 
   shotKeeper.update();
 
-  // [Bullet => Check for collision]
   // [ 2 ] COLLISION DETECTION
-  // TODO: Cassie
+  // [Bullet => Check for collision]
+  // TODO: Cassie (i.e. player token collision)
   // cassie.intersect(); 
   // [Bullets => iterate invaders]
 
@@ -367,34 +309,26 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   gameArea.clear();
 
   // [ 4 ] DRAW
-  // cassie.draw();
+  // cassie.draw(); // Relocation: moved to renderer
   renderer.render();
-
   inv.draw();
   shotKeeper.draw();
   //framesPerSecond(); // Just a display //BUG1 - Displaying bullets for now
   // TODO: Reset timeStamp(?) Not sure if possible
-//============================================================================== 
-  //BUG1 - display the seconds passed
-  document.getElementById("demo").innerHTML = "Sec: " + Math.round(timeStamp/1000) + "\n" + "timeStamp:" + Math.round(timeStamp/1000) + "OldTimeStamp:" + Math.round(oldTimeStamp/1000);
-//==============================================================================
 
   // Keep requesting further iterations of 'gameLoop' to animate game
   // TODO: Reset timeStamp(?)
-  // window.requestAnimationFrame(gameLoop);
-//==============================================================================
-  reqId = window.requestAnimationFrame(gameLoop); // BUG1 - Stop animation w/ id
-//==============================================================================
+  window.requestAnimationFrame(gameLoop);
 }
 
 function framesPerSecond() { // Displays fps on canvas
-//   // Display FPS on canvas                  
-  // ctx.fillStyle = "rgba(0, 0, 0, 0)";
-  // ctx.fillRect(0, 0, 200, 100);
-  // ctx.font = '15px Arial';
-  // ctx.fillStyle = 'white';
+//   // Extra: Display FPS on canvas                  
+  ctx.fillStyle = "rgba(0, 0, 0, 0)";
+  ctx.fillRect(0, 0, 200, 100);
+  ctx.font = '15px Arial';
+  ctx.fillStyle = 'white';
   // ctx.fillText("Bullets: " +  shots.length);
-  // ctx.fillText("fps: " + fps, canvas.width - 50, canvas.height - 10);
+  ctx.fillText("fps: " + fps, canvas.width - 50, canvas.height - 10);
   // ctx.fillText("playerBH: " + playerBH, canvas.width - 150, canvas.height - 50);
 }
 
@@ -456,26 +390,17 @@ function invaderToken(width, height, color, x, y, velocity, magnitude = 1, fireR
 
   this.shoot = function () {
       cooldown += secondsPassed;
-      // if(once) {
 
-      // once = false;
       if(cooldown > fireRate) {
         cooldown = 0;
+
         // laChance is French for luck
         // let laChance = Math.floor(Math.random()*101);
-
         // if(laChance < shotChance) { //@BULL1
-          // this.y + height + 1 to ensure bullet doesn't kill origin point
-//==============================================================================
-//CVIS bullet color changes every other game (Not working rn)              
-          // shotKeeper.addShot(5, 10, /*color*/ "orange", this.x + width/2, 
-          //                    this.y + height + 1, 1, 15 /*BUG1 VBS magnitude 125*/);
-          shotKeeper.addShot(5, 10, /*color*/ _BC, this.x + width/2, 
-                             this.y + height + 1, 1, 80 /*BUG1 VBS magnitude 125*/);
-//==============================================================================
+          // this.y + height + 1 to ensure bullet doesn't kill origin point              
+          shotKeeper.addShot(5, 10, /*color*/ "orange", this.x + width/2, 
+                             this.y + height + 1, 1, 15 /*BUG1 VBS magnitude 125*/);
         }
-      // }
-
       // }
   }
 }
@@ -513,12 +438,12 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     setup: function() {
       // Set up frontline invaders
       this.f = []; // erase previous values
-      let frontliners = this.a[this.r - 1];
-      // this.f = this.a[this.r - 1]; // Reset frontline to frontmost array
+      // let frontliners = this.a[this.r - 1];
+      this.f = this.a[this.r - 1]; // Reset frontline to frontmost array
 
-      for(let i = 0; i < frontliners.length; i ++) {
-        this.f.push(frontliners[i]);
-      }
+      // for(let i = 0; i < frontliners.length; i ++) {
+      //   this.f.push(frontliners[i]);
+      // }
     }
   };
 
@@ -539,10 +464,10 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
   var wait = false; // 'turns' (frameRate) invaders must wait before moving again
 
   this.setup = function() {
-    // if(!invadersMem) { // MEM
+    if(!invadersMem) {
       this.invadarr.clear(); // Make sure invader array is clear (sanity check mostly)
       // invadarr.a = [];
-    // }
+    }
 
     frameNum = 0; // Start waiting time from 0
 
@@ -557,7 +482,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     let y = 0; // y positioning (increments of 50 at the moment)
 
     // EACH INDIVIDUAL INVADER
-    // if(!invadersMem) { // MEM
+    if(!invadersMem) {
       this.invadarr.addRows(2); // two rows
       // Populate with invaderCount number of invaders
       for(let i = 0; i < invaderCount; ++ i) {
@@ -568,23 +493,23 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
         this.invadarr.a[1].push(new invaderToken(/*width:*/ vw, /*height:*/ vh, /*color:*/ "green", /*x:*/ drawAt, /*y:*/ 50, /*velocity:*/ 1 /*, fireRate: 3, collided: false*/));
 
         drawAt += next;
-      // } // MEM
-      // invadersMem = true; // MEM
+      }
+      invadersMem = true;
     }
-    // else { // Recycle invader array if it already existed // MEM
-    //   this.invadarr.a.forEach(function(row) {
-    //     row.forEach(function(invader) {
-    //       // Reset positioning and other pertinent values
-    //       invader.x = drawAt;
-    //       invader.y = y;
-    //       drawAt += next;
-    //       invader.collided = false; // All invaders intact
-    //       invader.cooldown = 0; // Reset shot cooldown time
-    //     });
-    //     drawAt = edgeSpace;
-    //     y += 50; // Y axis space for next row of invaders
-    //   });
-    // }
+    else { // Recycle invader array if it already existed
+      this.invadarr.a.forEach(function(row) {
+        row.forEach(function(invader) {
+          // Reset positioning and other pertinent values
+          invader.x = drawAt;
+          invader.y = y;
+          drawAt += next;
+          invader.collided = false; // All invaders intact
+          invader.cooldown = 0; // Reset shot cooldown time
+        });
+        drawAt = edgeSpace;
+        y += 50; // Y axis space for next row of invaders
+      });
+    }
     this.invadarr.setup(); // Set frontliners array again
 
     // SPEED AND DIRECTION
@@ -594,7 +519,7 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     // Reference for invaders on both ends of array
     vLeftmost = this.invadarr.a[0][0];
     vRightmost = this.invadarr.a[0][this.invadarr.a[0].length - 1];
-    vRightmost.magnitude = 0; /*BUG1: magnitude = 30 */ // TODO: Replace vRightmost.magnitude with just an ordinary instance of magnitude (individual invaders might not need a speedboost defined, so it's wasted on them)
+    vRightmost.magnitude = 10; /*BUG1: magnitude = 30 */ // TODO: Replace vRightmost.magnitude with just an ordinary instance of magnitude (individual invaders might not need a speedboost defined, so it's wasted on them)
   }
 
   this.update = function() { // Update positioning
@@ -654,8 +579,6 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     }
   }
 
-  // Possible Optimization: shoot and draw done in one go of the loop instead of two
-  // (won't have to iterate through loop twice, optimizes by small amount)
   // RELOCATION (Marked for later)
   this.draw = function() {
     this.invadarr.a.forEach(function(row) {
@@ -802,19 +725,6 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
    
     shots.push(new gamePart(this.width, this.height, this.color, this.x, this.y, 
                             this.velocity, this.magnitude, this.collided));
-
-//==============================================================================
-    //CVIS attempt drawing out any bullet upon its creation (Didn't really 
-    // change much from the code above though)
-    // var bullet = new gamePart(this.width, this.height, this.color, this.x, this.y, 
-                            // this.velocity, this.magnitude, this.collided);
-    // shots.push(bullet);
-
-    // Attempt at showing number of bullets as they are added to total number of
-    // shots (seems to uphold that there are no shots created before the game)
-    //document.getElementById("bull").innerHTML = "bullets: " + shots.length;
-    // this.draw(bullet);
-//==============================================================================
   }
 
   // Redefine clear/draw to render all the bullets. Probably though can use the
@@ -824,24 +734,11 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
   // things move, and movement is simply adding/subtracting x and y. The draws
   // are already DRYed out
   this.update = function() {
-// Attempt at showing that the number of bullets is zero before the game starts
-// (Displays zero before the game is started and updates regularly)
-//==============================================================================
-    // document.getElementById("bull").innerHTML = "bullets: " + shots.length;
-//==============================================================================
     //TODO: Add collision check, remove if collision
     // Delete individual shot if it leaves canvas (cleanup)
     // Movement
     shots.forEach(function(shot) {
-      // if(first && shot.color == "orange") { //BUG1 get frontmost player bullet height
-      //   playerBH = shot.y;
-      //   first == false;
-      // }
       if(shot.y > canvas.height || shot.y < 0) {
-        //BUG1 fontmost player bullet is gone, go to next one
-        // if(shot.color == "orange") {
-        //   first = true;
-        // }
         shots.splice(shot, 1); 
       }
       else { // advance
@@ -855,11 +752,7 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
     // let thisVader = invadarr.a[1][index]; // get value of invader in question
 
     shots.forEach(function(shot) {
-      // T0D0 => way to fix THIS??????????????????????>?>?>?>?>?>?>?>?>?>?>?>?>?
-      //------------------------------------------------------------------------
-      // let collides = intersect(shot, token);
-      //------------------------------------------------------------------------
-      let collides = intersect(shot, token);
+      let collides = intersect(shot, token); // Way to fix this (?)
       if (collides) {
         shot.collided = true;
         // Bullet and invader cancel each other
@@ -878,10 +771,8 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
   }
 
   this.draw = function() {
-    // Extra: displays number of bullets on the window/screen
-//==============================================================================    
-    // document.getElementById("bull").innerHTML = "bullets: " + shots.length;
-//============================================================================== 
+    // Extra: displays number of bullets on the window/screen   
+    document.getElementById("bull").innerHTML = "bullets: " + shots.length;
     shots.forEach(function(shot) {
       shot.draw();
     });
