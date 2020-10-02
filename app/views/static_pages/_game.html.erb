@@ -326,7 +326,7 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   // // speed (would break the game)
   // There was a significant gap in time from the execution of the game to get to the first frame compared to the gap in time from the first frame to the second frame when you consider the game didn’t start immediately upon the site loading (you have to click the play button). This means the first frame took a longer time to execute than the ones that come after.
   // Bug was the script trying to make everything move at ‘the same speed’ which takes into account how long the time was between each frame (usually a predetermined amount of time which is relatively small, however long it takes for browser to request new frame, hence the smooth animation with requestAnimationFrame), this implies that when the page was loaded, the time was already being counted, however, since the first bullets weren’t shot immediately, the script hadn’t executed yet, the game tried to compensate for the first bullets’ lack of initial movement by moving them a large distance ahead to make it ‘look’ like they had been moving at the same ‘speed’ as their successors. Hence, the broken game logic. 
-  // secondsPassed = Math.min(0.1, secondsPassed);
+  secondsPassed = Math.min(0.1, secondsPassed);
   // secondsPassed = (timeStamp-oldTimeStamp)/1000;
   //===
   oldTimeStamp = timeStamp;
