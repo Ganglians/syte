@@ -70,11 +70,9 @@ const ArrowDown  = 40;
 let playerBH = 0;
 // let first = true;
 
-
 // Stacked: Do not re-initialize invaders if already done before 
-var invadersMem = false; // STANDBY1: Remove while adding features MEM
+var invadersMem = false;
 // Ensures game only starts every other click (start -> reset & stop -> start)
-// var go = true; // ERROR?
 var go = true;
 
 // Game canvas reference used throughout many object methods
@@ -125,7 +123,14 @@ var imgRepo = new function(nImages = 1) { // Singleton
 };
 
 // Renderer object
-var renderer = (function() {
+var renderer = (function() { // Note: context = ctx for now, later, the 'context' 
+                             // variable will be defined internally 
+  function _drawToken(context, token) { //Draw generic polygon token (square)
+      ctx.fillStyle = token.color;
+      ctx.globalAlpha = 0.7; // Opacity
+      ctx.fillRect(token.x, token.y, token.width, token.height); // Rectangular
+  }
+
   function _drawPlayer(context, token) { // render player token
     ctx.drawImage(imgRepo.player_token, token.x, token.y, token.width, token.height);
   }
@@ -157,14 +162,30 @@ var renderer = (function() {
         _drawPlayer(ctx, entity);
       }
 
-      else { // Default
-
+      else { // Default, basic square-shaped polygon
+        _drawToken(ctx, entity);
       }
     });
   }
 
   return {
     render: _render // Function accessor
+  };
+
+})();
+
+var physics = (function () {
+  // Updates 
+  // TODO: Also handles collisions
+  function _update() {
+    gameArea.entities.forEach(function(entity) {
+      // TODO: Need to implement both X and Y directions (only use one of those atm)
+      // entity.y += entity.y.direction;
+    });
+  }
+
+  return {
+    update: _update
   };
 
 })();
@@ -184,8 +205,16 @@ const toggle = (elem) => {
 
 // Entirety of game's 'screen', where all the visible game pieces are
 var gameArea = (function() { // Singleton
-  var _entities = []; // Holds all game tokens
-
+  var _entities = []; // Holds all (generic) game tokens
+//------------------------------------------------------------------------------
+  // Attempt to separate game objects from their drawing and physics by keeping
+  // their data here and implementing the other actions in two different
+  // objects, in general can keep everything in one var, but for ease of use, 
+  // separating the different types of game objects.
+  
+  var _invaders = []; // Holds all invaders
+  var _bullets =  []; // Holds all bullets
+//------------------------------------------------------------------------------
   function _tog() {
     //BUG1
     if (go == true) { // Initiate game    
@@ -313,7 +342,7 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   renderer.render();
   inv.draw();
   shotKeeper.draw();
-  //framesPerSecond(); // Just a display //BUG1 - Displaying bullets for now
+  framesPerSecond(); // Just a display //BUG1 - Displaying bullets for now
   // TODO: Reset timeStamp(?) Not sure if possible
 
   // Keep requesting further iterations of 'gameLoop' to animate game
@@ -346,15 +375,20 @@ function intersect(object1, object2) { // Checks if two boxes intersect
 
 // Abstract object 
 
-function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0, velocity = 1, magnitude = 1, collided = false) {
+function gameToken(width = 50, height = 70, color = "blue", 
+                   x = 0, y = 0, 
+                   xVelocity  = 1, yVelocity  = 1,  
+                   collided   = false) {
+
   this.width  = width;
   this.height = height;
   this.color  = color;
   // Object position in the (x, y) plane
   this.x = x;
   this.y = y;
-  this.velocity  = velocity;
-  this.magnitude = magnitude;
+
+  this.xVelocity  = xVelocity;
+  this.yVelocity  = yVelocity;
 
   // Set collision boolean
   this.collided = collided;
@@ -367,24 +401,37 @@ function gamePart(width = 50, height = 70, color = "blue", x = 0, y = 0, velocit
 
   }
 
+//------------------------------------------------------------------------------
+// RPART - Relocate to renderer
   // RELOCATE <- won't be needed here later
   this.draw = function() { // Redraw according to new positioning  
     ctx.fillStyle = color;
     ctx.globalAlpha = 0.7; // Opacity
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
-}
 
-function invaderToken(width, height, color, x, y, velocity, magnitude = 1, fireRate =  1 /*BUG1 fireRate*/, collided = false) { //BULL1
-  // invaderToken inherits from more generic gamePart class
-  gamePart.call(this, width, height, color, x, y, velocity, magnitude, collided);
-  this.prototype = Object.create(gamePart.prototype);
+  // this.draw = function() { // Redraw according to new positioning
+  // Note: Incorrect approach
+
+  //   // renderer.push()
+  //   _entities.push()
+  // }
+}
+//------------------------------------------------------------------------------
+
+//______________________________________________________________________________  
+function invaderToken(width, height, color, x, y, xVelocity = 1, yVelocity = 1, 
+                      collided = false, fireRate = 1 /*BUG1 fireRate*/) { //BULL1 
+
+  // invaderToken inherits from more generic gameToken class
+  gameToken.call(this, width, height, color, x, y, xVelocity, yVelocity, collided);
+  this.prototype = Object.create(gameToken.prototype);
   Object.defineProperty(this, 'constructor', { 
       value: invaderToken, 
       enumerable: false, // So that it does not appear in 'for in' loop
       writable: true 
   });  
-
+//______________________________________________________________________________ 
   var cooldown = 0; // Time to wait until next shot is available
   var shotChance = 1; // % (chance of shot per movement)
 
@@ -394,20 +441,34 @@ function invaderToken(width, height, color, x, y, velocity, magnitude = 1, fireR
       if(cooldown > fireRate) {
         cooldown = 0;
 
+        // TODO: Reintroduce 'randomized' shots at a later time
         // laChance is French for luck
         // let laChance = Math.floor(Math.random()*101);
         // if(laChance < shotChance) { //@BULL1
-          // this.y + height + 1 to ensure bullet doesn't kill origin point              
-          shotKeeper.addShot(5, 10, /*color*/ "orange", this.x + width/2, 
-                             this.y + height + 1, 1, 15 /*BUG1 VBS magnitude 125*/);
+          // this.y + height + 1 to ensure bullet doesn't kill origin point  
+          //____ fixing this will probably fix program, but the bullets seem to flow nicely atm            
+          shotKeeper.addShot(
+            /*width:*/        5, 
+            /*height:*/       10, 
+            /*color*/         "orange", 
+            /*x:*/            this.x + width/2, 
+            /*y:*/            this.y + height + 1, 
+            /*xVelocity:*/    125, /*BUG1 VBS xVelocity = 125*/
+            /*yVelocity:*/    125,
+            /*collided:       false*/);
         }
       // }
   }
 }
 
-function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gapSpace = 20, velocity = 1, frameRate = 250) {
+function invaders(invaderCount = 1, 
+                 {invaderWidth = 10, invaderHeight = 10}, 
+                 gapSpace = 20, 
+                 xVelocity  = 1, yVelocity  = 1,
+                 frameRate = 100) {  
+
   this.invadarr = { // 2d invader array
-    // a: {}, // Associative array, doesn't work with lengths and such
+    // a: {}, // Associative array, doesn't have built-in methods (ex. length())
     a: [],
     f: [], // Invaders in the frontline (those allowed to shoot) 
     r: 0, // total rows
@@ -431,8 +492,8 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     },
 
     clear: function() {
-      this.a = []; // Reset array content
-      this.r = 0; // No rows on empty array
+      this.a = []; // Reset entire array content
+      this.r = 0; // No rows on empty arrayhttps://www.linkedin.com/
     },
 
     setup: function() {
@@ -453,13 +514,11 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
   var vh = invaderHeight;
 
   var b = gapSpace; // Space [ b ]etween each invader
-  this.velocity = velocity;
+  this.xVelocity = xVelocity;
   var frameUpper = frameRate;
 
   var frameNum = 0; // Marks the current frame you're on
   var vLeftmost, vRightmost;
-  // var moveRight = true;
-  let magnitude = 1;
 
   var wait = false; // 'turns' (frameRate) invaders must wait before moving again
 
@@ -487,11 +546,28 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
       // Populate with invaderCount number of invaders
       for(let i = 0; i < invaderCount; ++ i) {
         //BACK2
-        this.invadarr.a[0].push(new invaderToken(/*width:*/ vw, /*height:*/ vh, /*color:*/"green", /*x:*/ drawAt, /*y:*/ 0, /*velocity:*/ 0 /*, fireRate: 3, collided: false*/));
+        this.invadarr.a[0].push(new invaderToken(/*width:*/       vw, 
+                                                 /*height:*/      vh, 
+                                                 /*color:*/       "green", 
+                                                 /*x:*/           drawAt,
+                                                 /*y:*/           0, 
+                                                 /*xVelocity:*/   0,
+                                                 /*yVelocity:*/   0
+                                                 /*, 
+                                                 fireRate:        3, 
+                                                 collided:        false*/));
 
         // Another row in front of previous row (y + 50)
-        this.invadarr.a[1].push(new invaderToken(/*width:*/ vw, /*height:*/ vh, /*color:*/ "green", /*x:*/ drawAt, /*y:*/ 50, /*velocity:*/ 1 /*, fireRate: 3, collided: false*/));
-
+        this.invadarr.a[1].push(new invaderToken(/*width:*/       vw, 
+                                                 /*height:*/      vh, 
+                                                 /*color:*/       "green", 
+                                                 /*x:*/           drawAt, 
+                                                 /*y:*/           50, 
+                                                 /*xVelocity:*/   0,
+                                                 /*yVelocity:*/   0, 
+                                                 /*, 
+                                                 fireRate:        3, 
+                                                 collided:        false*/)); 
         drawAt += next;
       }
       invadersMem = true;
@@ -513,20 +589,21 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     this.invadarr.setup(); // Set frontliners array again
 
     // SPEED AND DIRECTION
-    velocity = 1;
-    magnitude = 1;
+    xVelocity  = 5;
+    yVelocity  = 1;
+
     wait = false;
-    // Reference for invaders on both ends of array
+    // Reference for vaders on both ends of array
     vLeftmost = this.invadarr.a[0][0];
     vRightmost = this.invadarr.a[0][this.invadarr.a[0].length - 1];
-    vRightmost.magnitude = 10; /*BUG1: magnitude = 30 */ // TODO: Replace vRightmost.magnitude with just an ordinary instance of magnitude (individual invaders might not need a speedboost defined, so it's wasted on them)
+    vRightmost.xVelocity = 10; /*BUG1: xVelocity = 30 */ // TODO: Replace vRightmost.xVelocity with just a general instance of xVelocity (individual invaders might not need a speedboost defined, so it's wasted on them)
   }
 
   this.update = function() { // Update positioning
     if (frameNum ++ >= frameUpper) {
       frameNum = 0; // Reset frame
 
-      if(wait) { // move forward
+      if(wait) { // move 'forward' y axis
         this.invadarr.a.forEach(function(row){
           row.forEach(function(invader) {
             invader.y += 10;
@@ -536,13 +613,14 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
         wait = false;
       }
       else {
-        let dist  = velocity * vRightmost.magnitude;
+        // Check left and right vader boundaries
+        let dist  = vRightmost.xVelocity;
         let distR = vRightmost.x + dist;
         let distL = vLeftmost.x + dist;
 
         // Movement based on canvas boundary collisions
         if(distR + vRightmost.width > canvas.width) { 
-          velocity *= -1; // Change directions for next iteration
+          xVelocity *= -1; // Change directions for next iteration
           // Calculate distance needed to reach rightmost canvas edge
           let finalDist = canvas.width - (vRightmost.x + vRightmost.width);
 
@@ -558,8 +636,9 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
         }
 
         else if(distL < 0) { // would cross the left boundary    
-          velocity *= -1;
+          xVelocity *= -1;
           // move final distance to reach canvas' left boundary
+           // calculate distance for leftmost to reach canvas boundary
           let finalDist = 0 - vLeftmost.x;
 
           this.invadarr.a.forEach(function(row) {
@@ -579,41 +658,58 @@ function invaders(invaderCount = 1, {invaderWidth = 10, invaderHeight = 10}, gap
     }
   }
 
+//------------------------------------------------------------------------------
   // RELOCATION (Marked for later)
   this.draw = function() {
     this.invadarr.a.forEach(function(row) {
       row.forEach(function(invader) {
         if(!invader.collided) { // Dead invaders not drawn
-          invader.draw();
+// Drawing will be done when calling renderer
+// Idea: Use a map to add/remove elements(?) Won't be able to just not draw them
+// now because that needs to be done in the renderer, might have to repurpose 
+// these methods into the renderer because they involve having to draw things 
+// (i.e. this method along with the 'shoot' method below)
+// 
+          invader.draw(); 
+          // gameArea.entities.push(invader);
+
         }
       });
     });
+//------------------------------------------------------------------------------    
   }
 
   this.shoot = function() {
     if(!wait) {
       this.invadarr.f.forEach(function(frontliner) { // Frontmost invaders will shoot
         if(!frontliner.collided) {
+//--------
             frontliner.shoot();
+//--------            
         }
       });
     }
   }
 }
 
-// Optional: With inheritance, can add new properties at the end of 'magnitude'
-function playerToken(width, height, color, x, y, velocity = 1, magnitude = 1000, /* BULL1 -> magnitude = 125*/ fireRate = .25) {
-  // playerToken inherits from more generic gamePart class
-  gamePart.call(this, width, height, color, x, y, velocity, magnitude);
-  this.prototype = Object.create(gamePart.prototype);
+// Optional: With inheritance, can add new properties at the end of 'fireRate'
+function playerToken(width, height, color, 
+                     x, y, 
+                     xVelocity = 1000, yVelocity = 1, /* BULL1->xVelocity = 125*/ 
+                     collided = false, fireRate = .25) {
+
+  // playerToken inherits from more generic gameToken class
+  gameToken.call(this, width, height, color, x, y, xVelocity, yVelocity, collided);
+  this.prototype = Object.create(gameToken.prototype);
   Object.defineProperty(this, 'constructor', {
       value: playerToken, 
       enumerable: false, // so that it does not appear in 'for in' loop
       writable: true 
   });
 
-  this.velocity = velocity;
-  this.magnitude = magnitude;
+  this.xVelocity = xVelocity;
+  this.yVelocity = yVelocity;
+
   var cooldown = 0;
 
   this.setup = function() { // RELOCATION: Moving setup to renderer
@@ -633,31 +729,31 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 1000,
     // Player token direction based on arrow keys
     if (left && !right) {
       holding = 'left';
-      this.velocity = -1;
+      this.xVelocity = -1;
     }
     if(!left && right) {
       holding = 'right';
-      this.velocity = 1;
+      this.xVelocity = 1;
     }
     if(left && right) { // Special case: player holds both arrows
       if(holding == 'right') { // Was holding right first
-        this.velocity = -1; // Most recent is left, so go left
+        this.xVelocity = -1; // Most recent is left, so go left
       }
       if(holding == 'left') { // Was holding left first
-        this.velocity = 1; // Most recent is right, so go right
+        this.xVelocity = 1; // Most recent is right, so go right
       }
       if(holding == '') { // Edge case, pressed both at exact time, choose one
         holding = 'right';
-        this.velocity = -1; 
+        this.xVelocity = -1; 
       }
     }
     if(!right && !left) {
       holding = ''; // Reset, player is not holding either
-      this.velocity = 0;
+      this.xVelocity = 0;
     }
 
     // (velocity = distance/time_passed) * const * time_passed = distance
-    let dist = this.x + this.velocity * this.magnitude * secondsPassed;
+    let dist = this.x + this.xVelocity * secondsPassed;
 
     if(dist == 0) { // No movement
 
@@ -682,9 +778,13 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 1000,
   //   ctx.drawImage(imgRepo.player_token, this.x, this.y, this.width, this.height);
   // }
 
-  this.draw = function() { // Relocation (WiP -> will be entirely rendered in the renderer without having to be called here, maybe)
-    renderer.render();
-  }
+//------------------------------------------------------------------------------
+  // Relocation: Player token drawing moved to renderer
+
+  // this.draw = function() { // Relocation (WiP -> will be entirely rendered in the renderer without having to be called here, maybe)
+    // renderer.render();
+  // }
+//------------------------------------------------------------------------------
 
   this.shoot = function() {
     let space = activeKeys[Space]; // Press Enter to shoot
@@ -692,9 +792,16 @@ function playerToken(width, height, color, x, y, velocity = 1, magnitude = 1000,
     if (space && cooldown > fireRate) { // Attempt at limiting bullets / sec
       cooldown = 0;
       // (x,y) displacement accomodates for token's dimensions
+      // Shot originates from middle of token and travels up
       // Negative velocity because player's bullets go up
-      shotKeeper.addShot(5, 10, "yellow", this.x + width/2, this.y - height/2, 
-                         -1, 500 /* TEST2 magnitude -> 125*/);
+      shotKeeper.addShot(/*width:*/        5, 
+                         /*height:*/       15, 
+                         /*color*/         "yellow",
+                         /*x:*/            this.x + width/2, 
+                         /*y:*/            this.y - height/2,
+                         /*xVelocity:*/    0,  
+                         /*yVelocity:*/   -500
+                         /*, collided =    false*/);
     }
   }
 }
@@ -710,21 +817,27 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
     shots = []; // Resets bullet array
   }
 
-  // TODO: Is there a way to reference gamePart for this?? They essentially take
+  // TODO: Is there a way to reference gameToken for this?? They essentially take
   // the same parameters
-  this.addShot = function(width = 5, height = 15, color = "blue", x = 70, y = 70,
-                          velocity = 1, magnitude = 500, collided = false) {
-    this.width = width;
+  this.addShot = function(width = 5, height = 15, color = "blue", 
+                          x = 70, y = 70,
+                          xVelocity = 0, yVelocity = 500,
+                          collided  = false) {
+
+    this.width  = width;
     this.height = height;
-    this.color = color;
+    this.color  = color;
+
     this.x = x;
     this.y = y;
-    this.velocity = velocity;
-    this.magnitude = magnitude;
+
+    this.xVelocity  = xVelocity;
+    this.yVelocity  = yVelocity;
+
     this.collided = collided;
    
-    shots.push(new gamePart(this.width, this.height, this.color, this.x, this.y, 
-                            this.velocity, this.magnitude, this.collided));
+    shots.push(new gameToken(this.width, this.height, this.color, this.x, this.y, 
+                             this.xVelocity, this.yVelocity, this.collided));
   }
 
   // Redefine clear/draw to render all the bullets. Probably though can use the
@@ -738,11 +851,11 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
     // Delete individual shot if it leaves canvas (cleanup)
     // Movement
     shots.forEach(function(shot) {
-      if(shot.y > canvas.height || shot.y < 0) {
+      if(shot.y > canvas.height || shot.y < 0) { // Remove out of bounds
         shots.splice(shot, 1); 
       }
       else { // advance
-        shot.y += shot.velocity * shot.magnitude * secondsPassed;
+        shot.y += shot.yVelocity * secondsPassed;
       }
     });
   }
@@ -788,7 +901,7 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
 <style>
   /*Include to hide HTML element by default*/
   .hidden {
-    /*display: none; */  /* CVIS Make canvas visible at all times*/
+    display: none;
   }
 
   #play-button {
