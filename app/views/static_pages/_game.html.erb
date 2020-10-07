@@ -377,7 +377,7 @@ function intersect(object1, object2) { // Checks if two boxes intersect
 
 function gameToken(width = 50, height = 70, color = "blue", 
                    x = 0, y = 0, 
-                   xVelocity  = 1, yVelocity  = 1,  
+                   xVelocity  = 1, yVelocity  = 1, 
                    collided   = false) {
 
   this.width  = width;
@@ -420,8 +420,10 @@ function gameToken(width = 50, height = 70, color = "blue",
 //------------------------------------------------------------------------------
 
 //______________________________________________________________________________  
-function invaderToken(width, height, color, x, y, xVelocity = 1, yVelocity = 1, 
-                      collided = false, fireRate = 1 /*BUG1 fireRate*/) { //BULL1 
+function invaderToken(width, height, color, 
+                      x, y, 
+                      xVelocity = 1,      yVelocity = 1,  
+                      collided = false, fireRate =  1 /*BUG1 fireRate*/) { //BULL1 
 
   // invaderToken inherits from more generic gameToken class
   gameToken.call(this, width, height, color, x, y, xVelocity, yVelocity, collided);
@@ -453,7 +455,7 @@ function invaderToken(width, height, color, x, y, xVelocity = 1, yVelocity = 1,
             /*color*/         "orange", 
             /*x:*/            this.x + width/2, 
             /*y:*/            this.y + height + 1, 
-            /*xVelocity:*/    125, /*BUG1 VBS xVelocity = 125*/
+            /*xVelocity:*/    1, 
             /*yVelocity:*/    125,
             /*collided:       false*/);
         }
@@ -464,7 +466,7 @@ function invaderToken(width, height, color, x, y, xVelocity = 1, yVelocity = 1,
 function invaders(invaderCount = 1, 
                  {invaderWidth = 10, invaderHeight = 10}, 
                  gapSpace = 20, 
-                 xVelocity  = 1, yVelocity  = 1,
+                 xVelocity  = 1, yVelocity  = 1, 
                  frameRate = 100) {  
 
   this.invadarr = { // 2d invader array
@@ -493,7 +495,7 @@ function invaders(invaderCount = 1,
 
     clear: function() {
       this.a = []; // Reset entire array content
-      this.r = 0; // No rows on empty arrayhttps://www.linkedin.com/
+      this.r = 0; // No rows on empty array
     },
 
     setup: function() {
@@ -514,11 +516,17 @@ function invaders(invaderCount = 1,
   var vh = invaderHeight;
 
   var b = gapSpace; // Space [ b ]etween each invader
+
   this.xVelocity = xVelocity;
+  this.yVelocity = yVelocity;
+
   var frameUpper = frameRate;
 
   var frameNum = 0; // Marks the current frame you're on
   var vLeftmost, vRightmost;
+  // var moveRight = true;
+  // let xMagnitude = 1;
+  // this.xMagnitude = xMagnitude;
 
   var wait = false; // 'turns' (frameRate) invaders must wait before moving again
 
@@ -554,6 +562,8 @@ function invaders(invaderCount = 1,
                                                  /*xVelocity:*/   0,
                                                  /*yVelocity:*/   0
                                                  /*, 
+                                                 xMagnitude:      1,
+                                                 yMagnitude:      1,
                                                  fireRate:        3, 
                                                  collided:        false*/));
 
@@ -566,6 +576,8 @@ function invaders(invaderCount = 1,
                                                  /*xVelocity:*/   0,
                                                  /*yVelocity:*/   0, 
                                                  /*, 
+                                                 xMagnitude:      1,
+                                                 yMagnitude:      1,
                                                  fireRate:        3, 
                                                  collided:        false*/)); 
         drawAt += next;
@@ -589,21 +601,21 @@ function invaders(invaderCount = 1,
     this.invadarr.setup(); // Set frontliners array again
 
     // SPEED AND DIRECTION
-    xVelocity  = 5;
+    xVelocity  = 30;
     yVelocity  = 1;
 
     wait = false;
     // Reference for vaders on both ends of array
     vLeftmost = this.invadarr.a[0][0];
     vRightmost = this.invadarr.a[0][this.invadarr.a[0].length - 1];
-    vRightmost.xVelocity = 10; /*BUG1: xVelocity = 30 */ // TODO: Replace vRightmost.xVelocity with just a general instance of xVelocity (individual invaders might not need a speedboost defined, so it's wasted on them)
+    //vRightmost.xVelocity = 10; /*BUG1: magnitude = 30 */ // TODO: Replace vRightmost.magnitude with just an ordinary instance of magnitude (individual invaders might not need a speedboost defined, so it's wasted on them)
   }
 
   this.update = function() { // Update positioning
     if (frameNum ++ >= frameUpper) {
       frameNum = 0; // Reset frame
 
-      if(wait) { // move 'forward' y axis
+      if(wait) { // move 'forward' y axis by 10 pixels (? TODO: use yVelocity)
         this.invadarr.a.forEach(function(row){
           row.forEach(function(invader) {
             invader.y += 10;
@@ -614,11 +626,12 @@ function invaders(invaderCount = 1,
       }
       else {
         // Check left and right vader boundaries
-        let dist  = vRightmost.xVelocity;
+        let dist  = xVelocity;
         let distR = vRightmost.x + dist;
         let distL = vLeftmost.x + dist;
 
         // Movement based on canvas boundary collisions
+        // Right boundary of canvas
         if(distR + vRightmost.width > canvas.width) { 
           xVelocity *= -1; // Change directions for next iteration
           // Calculate distance needed to reach rightmost canvas edge
@@ -635,6 +648,7 @@ function invaders(invaderCount = 1,
           wait = true; // Make invaders wait at corner for two 'turns' (frameRate)
         }
 
+        // Left boundary of canvas
         else if(distL < 0) { // would cross the left boundary    
           xVelocity *= -1;
           // move final distance to reach canvas' left boundary
@@ -649,8 +663,8 @@ function invaders(invaderCount = 1,
 
           wait = true;
         }
-        else this.invadarr.a.forEach(function(row){ // Advance like normal
-          row.forEach(function(invader){
+        else this.invadarr.a.forEach(function(row) { // Advance like normal
+          row.forEach(function(invader) {
             invader.x += dist;
           });
         });
@@ -794,6 +808,8 @@ function playerToken(width, height, color,
       // (x,y) displacement accomodates for token's dimensions
       // Shot originates from middle of token and travels up
       // Negative velocity because player's bullets go up
+      // shotKeeper.addShot(5, 10, "yellow", this.x + width/2, this.y - height/2, 
+      //                    -1, 500 /* TEST2 magnitude -> 125*/);
       shotKeeper.addShot(/*width:*/        5, 
                          /*height:*/       15, 
                          /*color*/         "yellow",
