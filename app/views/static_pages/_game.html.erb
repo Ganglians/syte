@@ -123,6 +123,7 @@ var imgRepo = new function(nImages = 1) { // Singleton
 };
 
 // Renderer object
+//MOVE DOWN below gamearea
 var renderer = (function() { // Note: context = ctx for now, later, the 'context' 
                              // variable will be defined internally 
   function _drawToken(context, token) { //Draw generic polygon token (square)
@@ -135,15 +136,17 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
     ctx.drawImage(imgRepo.player_token, token.x, token.y, token.width, token.height);
   }
 
-  function _drawInvader(context, token) { // render invader tokens
+  // WiP: No invader sprite yet. Draw as a plain token (a rectangle)
+  // function _drawInvader(context, token) { // render invader tokens
 
-  }
+  // }
 
   function _render() {
     // TODO: Move the gloval canvas variables here
     // var canvas = document.getElementById("game-canvas");
     // var context = canvas.getContext("2d");
 
+    // Example of a more C ++ approach to the loop:
     // var i,
     //     entity,
     //     entities = gameArea.entities(); // get tokens
@@ -174,7 +177,7 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
 
 })();
 
-var physics = (function () {
+var physics = (function () { //MOVE DOWN below gamearea
   // Updates 
   // TODO: Also handles collisions
   function _update() {
@@ -205,6 +208,7 @@ const toggle = (elem) => {
 
 // Entirety of game's 'screen', where all the visible game pieces are
 var gameArea = (function() { // Singleton
+  // Hold all game tokens used in the game
   var _entities = []; // Holds all (generic) game tokens
 //------------------------------------------------------------------------------
   // Attempt to separate game objects from their drawing and physics by keeping
@@ -212,8 +216,54 @@ var gameArea = (function() { // Singleton
   // objects, in general can keep everything in one var, but for ease of use, 
   // separating the different types of game objects.
   
-  var _invaders = []; // Holds all invaders
-  var _bullets =  []; // Holds all bullets
+  // var _invaders =  []; // Holds all invaders
+  var _invadarr = (function() { // 2d invader array
+    //  a: {},  // Associative array, doesn't have built-in methods (ex. length())
+    var a = [],
+        f = [], // Invaders in the frontline (those allowed to shoot) 
+        r = 0;  // total rows
+
+    function _totCols(rowIndex) { // Total number of columns for given row
+      if(rowIndex < this.r) {
+        return this.a[rowIndex].length;
+      }
+      else {
+        return false; // Out of bounds
+      }
+    }
+
+    function _addRows(numOf) { // Add specific number of rows
+      for(let i = 0; i < numOf; i ++) {
+        this.a[this.r ++] = [];
+      }
+    }
+
+    function _clear() {
+      this.a = []; // Reset entire array content
+      this.r = 0; // No rows on empty array
+    }
+
+    function _setup() {
+      // Set up frontline invaders
+      this.f = []; // erase previous values
+      // let frontliners = this.a[this.r - 1];
+      this.f = this.a[this.r - 1]; // Reset frontline to frontmost array
+
+      // for(let i = 0; i < frontliners.length; i ++) {
+      //   this.f.push(frontliners[i]);
+      // }
+    }
+
+    return {
+      totCols: _totCols, // method accessors
+      addRows: _addRows,
+      clear:   _clear,
+      setup:   _setup,
+      totRows: function() { return r; } // data accessors
+    };
+  })();
+
+  var _bullets  =  []; // Holds all bullets
 //------------------------------------------------------------------------------
   function _tog() {
     //BUG1
@@ -290,7 +340,8 @@ var gameArea = (function() { // Singleton
     start: _start,
     clear: _clear,
     reset: _reset,
-    entities: function() { return _entities; } // data accessors
+    entities: function() { return _entities; }, // data accessors
+    invadarr: function() { return _invadarr; }
   };
 })();
 
@@ -323,7 +374,7 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   // [Bullets => iterate invaders]
 
   // Invader collision check (only first row for now)
-  inv.invadarr.a.forEach(function(row, rind){ // row index
+  gameArea.invadarr().a.forEach(function(row, rind){ // row index
     row.forEach(function(invader, cind) { // column index
       shotKeeper.collisionCheck(invader);
       // WIP
@@ -350,17 +401,6 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   window.requestAnimationFrame(gameLoop);
 }
 
-function framesPerSecond() { // Displays fps on canvas
-//   // Extra: Display FPS on canvas                  
-  ctx.fillStyle = "rgba(0, 0, 0, 0)";
-  ctx.fillRect(0, 0, 200, 100);
-  ctx.font = '15px Arial';
-  ctx.fillStyle = 'white';
-  // ctx.fillText("Bullets: " +  shots.length);
-  ctx.fillText("fps: " + fps, canvas.width - 50, canvas.height - 10);
-  // ctx.fillText("playerBH: " + playerBH, canvas.width - 150, canvas.height - 50);
-}
-
 function intersect(object1, object2) { // Checks if two boxes intersect
   if (object2.x > object1.x + object1.width   || 
       object1.x > object2.x + object2.width   || 
@@ -375,10 +415,7 @@ function intersect(object1, object2) { // Checks if two boxes intersect
 
 // Abstract object 
 
-function gameToken(width = 50, height = 70, color = "blue", 
-                   x = 0, y = 0, 
-                   xVelocity  = 1, yVelocity  = 1, 
-                   collided   = false) {
+function gameToken(width = 50, height = 70, color = "blue", x = 0, y = 0, xVelocity  = 1, yVelocity  = 1, collided   = false) {
 
   this.width  = width;
   this.height = height;
@@ -418,12 +455,8 @@ function gameToken(width = 50, height = 70, color = "blue",
   // }
 }
 //------------------------------------------------------------------------------
-
-//______________________________________________________________________________  
-function invaderToken(width, height, color, 
-                      x, y, 
-                      xVelocity = 1,      yVelocity = 1,  
-                      collided = false, fireRate =  1 /*BUG1 fireRate*/) { //BULL1 
+ 
+function invaderToken(width, height, color, x, y, xVelocity = 1, yVelocity = 1, collided = false, fireRate =  1 /*BUG1 fireRate*/) { //BULL1 
 
   // invaderToken inherits from more generic gameToken class
   gameToken.call(this, width, height, color, x, y, xVelocity, yVelocity, collided);
@@ -433,14 +466,24 @@ function invaderToken(width, height, color,
       enumerable: false, // So that it does not appear in 'for in' loop
       writable: true 
   });  
-//______________________________________________________________________________ 
+
+  this.width = width;
+  this.height = height;
+  this.color = color;
+  this.x = x;
+  this.y = y;
+  this.xVelocity = xVelocity;
+  this.yVelocity = yVelocity;
+  this.collided = collided;
+  this.fireRate = fireRate;
+
   var cooldown = 0; // Time to wait until next shot is available
   var shotChance = 1; // % (chance of shot per movement)
 
   this.shoot = function () {
       cooldown += secondsPassed;
 
-      if(cooldown > fireRate) {
+      if(cooldown > this.fireRate) {
         cooldown = 0;
 
         // TODO: Reintroduce 'randomized' shots at a later time
@@ -453,8 +496,8 @@ function invaderToken(width, height, color,
             /*width:*/        5, 
             /*height:*/       10, 
             /*color*/         "orange", 
-            /*x:*/            this.x + width/2, 
-            /*y:*/            this.y + height + 1, 
+            /*x:*/            this.x + this.width/2, 
+            /*y:*/            this.y + this.height + 1, 
             /*xVelocity:*/    1, 
             /*yVelocity:*/    125,
             /*collided:       false*/);
@@ -468,47 +511,6 @@ function invaders(invaderCount = 1,
                  gapSpace = 20, 
                  xVelocity  = 1, yVelocity  = 1, 
                  frameRate = 100) {  
-
-  this.invadarr = { // 2d invader array
-    // a: {}, // Associative array, doesn't have built-in methods (ex. length())
-    a: [],
-    f: [], // Invaders in the frontline (those allowed to shoot) 
-    r: 0, // total rows
-    totRows: function() {
-      this.r;
-    },
-
-    totCols: function(rowIndex) { // Total number of columns for given row
-      if(rowIndex < this.r) {
-        return this.a[rowIndex].length;
-      }
-      else {
-        return false; // Out of bounds
-      }
-    },
-
-    addRows: function(numOf) { // Add specific number of rows
-      for(let i = 0; i < numOf; i ++) {
-        this.a[this.r ++] = [];
-      }
-    },
-
-    clear: function() {
-      this.a = []; // Reset entire array content
-      this.r = 0; // No rows on empty array
-    },
-
-    setup: function() {
-      // Set up frontline invaders
-      this.f = []; // erase previous values
-      // let frontliners = this.a[this.r - 1];
-      this.f = this.a[this.r - 1]; // Reset frontline to frontmost array
-
-      // for(let i = 0; i < frontliners.length; i ++) {
-      //   this.f.push(frontliners[i]);
-      // }
-    }
-  };
 
   this.invaderCount = invaderCount;
   // invadarr.c = invaderCount; // Number of invaders per row (read: columns)
@@ -532,7 +534,7 @@ function invaders(invaderCount = 1,
 
   this.setup = function() {
     if(!invadersMem) {
-      this.invadarr.clear(); // Make sure invader array is clear (sanity check mostly)
+      gameArea.invadarr().clear(); // Make sure invader array is clear (sanity check mostly)
       // invadarr.a = [];
     }
 
@@ -550,11 +552,13 @@ function invaders(invaderCount = 1,
 
     // EACH INDIVIDUAL INVADER
     if(!invadersMem) {
-      this.invadarr.addRows(2); // two rows
+      gameArea.invadarr().addRows(2); // two rows
       // Populate with invaderCount number of invaders
       for(let i = 0; i < invaderCount; ++ i) {
         //BACK2
-        this.invadarr.a[0].push(new invaderToken(/*width:*/       vw, 
+        // gameArea.invadarr().a[0].push(
+        gameArea.invadarr().a[0].push(
+                                new invaderToken(/*width:*/       vw, 
                                                  /*height:*/      vh, 
                                                  /*color:*/       "green", 
                                                  /*x:*/           drawAt,
@@ -568,7 +572,9 @@ function invaders(invaderCount = 1,
                                                  collided:        false*/));
 
         // Another row in front of previous row (y + 50)
-        this.invadarr.a[1].push(new invaderToken(/*width:*/       vw, 
+        // gameArea.invadarr().a[1].push(
+        gameArea.invadarr().a[1].push(
+                                new invaderToken(/*width:*/       vw, 
                                                  /*height:*/      vh, 
                                                  /*color:*/       "green", 
                                                  /*x:*/           drawAt, 
@@ -585,7 +591,7 @@ function invaders(invaderCount = 1,
       invadersMem = true;
     }
     else { // Recycle invader array if it already existed
-      this.invadarr.a.forEach(function(row) {
+      gameArea.invadarr().a.forEach(function(row) {
         row.forEach(function(invader) {
           // Reset positioning and other pertinent values
           invader.x = drawAt;
@@ -598,7 +604,7 @@ function invaders(invaderCount = 1,
         y += 50; // Y axis space for next row of invaders
       });
     }
-    this.invadarr.setup(); // Set frontliners array again
+    gameArea.invadarr().setup(); // Set frontliners array again
 
     // SPEED AND DIRECTION
     xVelocity  = 30;
@@ -606,8 +612,8 @@ function invaders(invaderCount = 1,
 
     wait = false;
     // Reference for vaders on both ends of array
-    vLeftmost = this.invadarr.a[0][0];
-    vRightmost = this.invadarr.a[0][this.invadarr.a[0].length - 1];
+    vLeftmost = gameArea.invadarr().a[0][0];
+    vRightmost = gameArea.invadarr().a[0][gameArea.invadarr().a[0].length - 1];
     //vRightmost.xVelocity = 10; /*BUG1: magnitude = 30 */ // TODO: Replace vRightmost.magnitude with just an ordinary instance of magnitude (individual invaders might not need a speedboost defined, so it's wasted on them)
   }
 
@@ -616,7 +622,7 @@ function invaders(invaderCount = 1,
       frameNum = 0; // Reset frame
 
       if(wait) { // move 'forward' y axis by 10 pixels (? TODO: use yVelocity)
-        this.invadarr.a.forEach(function(row){
+        gameArea.invadarr().a.forEach(function(row){
           row.forEach(function(invader) {
             invader.y += 10;
           });
@@ -639,7 +645,7 @@ function invaders(invaderCount = 1,
 
           // Move all invaders distance needed for rightmost invader to reach
           // canvas edge (and then move opposite direction in the next instance)
-          this.invadarr.a.forEach(function(row) {
+          gameArea.invadarr().a.forEach(function(row) {
             row.forEach(function(invader) {
               invader.x += finalDist;
             });
@@ -655,7 +661,7 @@ function invaders(invaderCount = 1,
            // calculate distance for leftmost to reach canvas boundary
           let finalDist = 0 - vLeftmost.x;
 
-          this.invadarr.a.forEach(function(row) {
+          gameArea.invadarr().a.forEach(function(row) {
             row.forEach(function(invader) {
               invader.x += finalDist;
             });
@@ -663,7 +669,7 @@ function invaders(invaderCount = 1,
 
           wait = true;
         }
-        else this.invadarr.a.forEach(function(row) { // Advance like normal
+        else gameArea.invadarr().a.forEach(function(row) { // Advance like normal
           row.forEach(function(invader) {
             invader.x += dist;
           });
@@ -675,7 +681,7 @@ function invaders(invaderCount = 1,
 //------------------------------------------------------------------------------
   // RELOCATION (Marked for later)
   this.draw = function() {
-    this.invadarr.a.forEach(function(row) {
+    gameArea.invadarr().a.forEach(function(row) {
       row.forEach(function(invader) {
         if(!invader.collided) { // Dead invaders not drawn
 // Drawing will be done when calling renderer
@@ -695,7 +701,7 @@ function invaders(invaderCount = 1,
 
   this.shoot = function() {
     if(!wait) {
-      this.invadarr.f.forEach(function(frontliner) { // Frontmost invaders will shoot
+      gameArea.invadarr().f.forEach(function(frontliner) { // Frontmost invaders will shoot
         if(!frontliner.collided) {
 //--------
             frontliner.shoot();
@@ -739,45 +745,50 @@ function playerToken(width, height, color,
     // canvas = document.getElementById("game-canvas");
     let right = activeKeys[ArrowRight];
     let left = activeKeys[ArrowLeft];
+    // Directions left gets 'closer' to zero while right moves 'away'
+    let leftWards = Math.abs(this.xVelocity) * -1;
+    let rightWards = Math.abs(this.xVelocity);
+    let movex; // might implement movey depending on game mechanics
+
 
     // Player token direction based on arrow keys
     if (left && !right) {
       holding = 'left';
-      this.xVelocity = -1;
+      movex = leftWards;
     }
     if(!left && right) {
       holding = 'right';
-      this.xVelocity = 1;
+      movex = rightWards;
     }
     if(left && right) { // Special case: player holds both arrows
       if(holding == 'right') { // Was holding right first
-        this.xVelocity = -1; // Most recent is left, so go left
+        movex = leftWards; // Choose left arbitrarily 
       }
       if(holding == 'left') { // Was holding left first
-        this.xVelocity = 1; // Most recent is right, so go right
+        movex = rightWards; // Most recent is right, so go right
       }
       if(holding == '') { // Edge case, pressed both at exact time, choose one
         holding = 'right';
-        this.xVelocity = -1; 
+        movex = rightWards; 
       }
     }
     if(!right && !left) {
       holding = ''; // Reset, player is not holding either
-      this.xVelocity = 0;
+      movex = 0;
     }
 
     // (velocity = distance/time_passed) * const * time_passed = distance
-    let dist = this.x + this.xVelocity * secondsPassed;
+    let dist = this.x + movex * secondsPassed;
 
-    if(dist == 0) { // No movement
+    if(dist == 0) { // Boundary
 
     }
-    else if(dist < 0) { // Boundary
+    else if(dist < 0) { // Boundary (move no further)
       this.x = 0;
     }
     else if(dist + this.width == canvas.width) { // Boundary
     }
-    else if(dist + this.width > canvas.width) { // Boundary
+    else if(dist + this.width > canvas.width) { // Boundary (move back)
       this.x = canvas.width - this.width; 
     }
     else { // Move
@@ -907,6 +918,18 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
     });
   }
 }
+
+function framesPerSecond() { // Displays fps on canvas
+//   // Extra: Display FPS on canvas                  
+  ctx.fillStyle = "rgba(0, 0, 0, 0)";
+  ctx.fillRect(0, 0, 200, 100);
+  ctx.font = '15px Arial';
+  ctx.fillStyle = 'white';
+  // ctx.fillText("Bullets: " +  shots.length);
+  ctx.fillText("fps: " + fps, canvas.width - 50, canvas.height - 10);
+  // ctx.fillText("playerBH: " + playerBH, canvas.width - 150, canvas.height - 50);
+}
+
 </script>
 <noscript>Error: Please download JavaScript for your browser.</noscript>
 
