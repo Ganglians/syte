@@ -99,8 +99,7 @@ let reqId; // Holds the requestId upon calling requestAnimationFrame
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~OBJECTS/FUNCTIONS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Images
-//REP1
-// Images for objects that will be used in-game (goal is for images to be loaded once and no need to create new image object each time they're needed)
+// Load game sprites/images
 var imgRepo = new function(nImages = 1) { // Singleton
   // IMAGE DEFINITIONS
   this.player_token = new Image();
@@ -126,7 +125,7 @@ var imgRepo = new function(nImages = 1) { // Singleton
 //MOVE DOWN below gamearea
 var renderer = (function() { // Note: context = ctx for now, later, the 'context' 
                              // variable will be defined internally 
-  function _drawToken(context, token) { //Draw generic polygon token (square)
+  function _drawRectangle(context, token) { // Generic rectangle
       ctx.fillStyle = token.color;
       ctx.globalAlpha = 0.7; // Opacity
       ctx.fillRect(token.x, token.y, token.width, token.height); // Rectangular
@@ -159,20 +158,25 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
     //       }
     //     }
 
-    // Get all game tokens from the game and draw them on the canvas
-    gameArea.entities().forEach(function(entity) { // Draw stored game tokens
-      if(entity instanceof playerToken) {
-        _drawPlayer(ctx, entity);
+    // Draw game tokens
+    gameArea.entities().forEach(function(entity) {
+      if(!entity.collided) { // Intact tokens only
+        if(entity instanceof playerToken) {
+          _drawPlayer(ctx, entity);
+        }   
+        else { // Default, rectangular polygon
+          _drawRectangle(ctx, entity);
+        }
       }
+    });
 
-      else { // Default, basic square-shaped polygon
-        _drawToken(ctx, entity);
-      }
+    gameArea.shots().forEach(function(shot) {
+      _drawRectangle(ctx, shot);
     });
   }
 
-  return {
-    render: _render // Function accessor
+  return { // Accessors
+    render: _render // Public method(s)
   };
 
 })();
@@ -263,7 +267,7 @@ var gameArea = (function() { // Singleton
     };
   })();
 
-  var _bullets  =  []; // Holds all bullets
+  var _shots  =  []; // Holds all bullets
 //------------------------------------------------------------------------------
   function _tog() {
     //BUG1
@@ -311,7 +315,8 @@ var gameArea = (function() { // Singleton
     // already)
     inv.setup();
     // Initialize structure that displays bullets (clears array)
-    shotKeeper.setup();
+    //shotKeeper.setup();
+    this._shots = [];
 
     // LOOP
     // Initiate gameLoop, request function gives the browser some air while 
@@ -341,7 +346,8 @@ var gameArea = (function() { // Singleton
     clear: _clear,
     reset: _reset,
     entities: function() { return _entities; }, // data accessors
-    invadarr: function() { return _invadarr; }
+    invadarr: function() { return _invadarr; },
+    shots:    function() { return _shots; }
   };
 })();
 
@@ -366,6 +372,7 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   inv.shoot();
 
   shotKeeper.update();
+  document.getElementById("bull").innerHTML = "bullets: " + gameArea.shots().length;
 
   // [ 2 ] COLLISION DETECTION
   // [Bullet => Check for collision]
@@ -374,7 +381,7 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   // [Bullets => iterate invaders]
 
   // Invader collision check (only first row for now)
-  gameArea.invadarr().a.forEach(function(row, rind){ // row index
+  gameArea.invadarr().a.forEach(function(row, rind) { // row index
     row.forEach(function(invader, cind) { // column index
       shotKeeper.collisionCheck(invader);
       // WIP
@@ -391,8 +398,6 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   // [ 4 ] DRAW
   // cassie.draw(); // Relocation: moved to renderer
   renderer.render();
-  inv.draw();
-  shotKeeper.draw();
   framesPerSecond(); // Just a display //BUG1 - Displaying bullets for now
   // TODO: Reset timeStamp(?) Not sure if possible
 
@@ -570,7 +575,7 @@ function invaders(invaderCount = 1,
                                                  yMagnitude:      1,
                                                  fireRate:        3, 
                                                  collided:        false*/));
-
+        gameArea.entities().push(gameArea.invadarr().a[0][i]);
         // Another row in front of previous row (y + 50)
         // gameArea.invadarr().a[1].push(
         gameArea.invadarr().a[1].push(
@@ -586,6 +591,7 @@ function invaders(invaderCount = 1,
                                                  yMagnitude:      1,
                                                  fireRate:        3, 
                                                  collided:        false*/)); 
+        gameArea.entities().push(gameArea.invadarr().a[1][i]);
         drawAt += next;
       }
       invadersMem = true;
@@ -678,27 +684,6 @@ function invaders(invaderCount = 1,
     }
   }
 
-//------------------------------------------------------------------------------
-  // RELOCATION (Marked for later)
-  this.draw = function() {
-    gameArea.invadarr().a.forEach(function(row) {
-      row.forEach(function(invader) {
-        if(!invader.collided) { // Dead invaders not drawn
-// Drawing will be done when calling renderer
-// Idea: Use a map to add/remove elements(?) Won't be able to just not draw them
-// now because that needs to be done in the renderer, might have to repurpose 
-// these methods into the renderer because they involve having to draw things 
-// (i.e. this method along with the 'shoot' method below)
-// 
-          invader.draw(); 
-          // gameArea.entities.push(invader);
-
-        }
-      });
-    });
-//------------------------------------------------------------------------------    
-  }
-
   this.shoot = function() {
     if(!wait) {
       gameArea.invadarr().f.forEach(function(frontliner) { // Frontmost invaders will shoot
@@ -713,10 +698,7 @@ function invaders(invaderCount = 1,
 }
 
 // Optional: With inheritance, can add new properties at the end of 'fireRate'
-function playerToken(width, height, color, 
-                     x, y, 
-                     xVelocity = 1000, yVelocity = 1, /* BULL1->xVelocity = 125*/ 
-                     collided = false, fireRate = .25) {
+function playerToken(width, height, color, x, y, xVelocity = 1000, yVelocity = 1, /* BULL1->xVelocity = 125*/ collided = false, fireRate = .25) {
 
   // playerToken inherits from more generic gameToken class
   gameToken.call(this, width, height, color, x, y, xVelocity, yVelocity, collided);
@@ -795,7 +777,6 @@ function playerToken(width, height, color,
       this.x = dist;
     }
   }
-
   // Relocation
   // this.draw = function() { // Redraw according to new positioning   
   //   // ctx.fillStyle = color;
@@ -803,13 +784,11 @@ function playerToken(width, height, color,
   //   ctx.drawImage(imgRepo.player_token, this.x, this.y, this.width, this.height);
   // }
 
-//------------------------------------------------------------------------------
   // Relocation: Player token drawing moved to renderer
 
   // this.draw = function() { // Relocation (WiP -> will be entirely rendered in the renderer without having to be called here, maybe)
     // renderer.render();
   // }
-//------------------------------------------------------------------------------
 
   this.shoot = function() {
     let space = activeKeys[Space]; // Press Enter to shoot
@@ -836,20 +815,7 @@ function playerToken(width, height, color,
 // Is there a better way to define an object with properties? Because this 
 // function will not be used as a data type or anything
 function shotKeeper() { // Object in charge of keeping tabs on all bullets
-  // Note: might reset bullet array upon game ending (at least until efficient 
-  // way of storing and re-using them is possibly found)
-  var shots = [];
-
-  this.setup = function() { // Run1 on game start
-    shots = []; // Resets bullet array
-  }
-
-  // TODO: Is there a way to reference gameToken for this?? They essentially take
-  // the same parameters
-  this.addShot = function(width = 5, height = 15, color = "blue", 
-                          x = 70, y = 70,
-                          xVelocity = 0, yVelocity = 500,
-                          collided  = false) {
+  this.addShot = function(width = 5, height = 15, color = "blue", x = 70, y = 70, xVelocity = 0, yVelocity = 500, collided  = false) {
 
     this.width  = width;
     this.height = height;
@@ -863,7 +829,7 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
 
     this.collided = collided;
    
-    shots.push(new gameToken(this.width, this.height, this.color, this.x, this.y, 
+    gameArea.shots().push(new gameToken(this.width, this.height, this.color, this.x, this.y, 
                              this.xVelocity, this.yVelocity, this.collided));
   }
 
@@ -877,9 +843,9 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
     //TODO: Add collision check, remove if collision
     // Delete individual shot if it leaves canvas (cleanup)
     // Movement
-    shots.forEach(function(shot) {
+    gameArea.shots().forEach(function(shot) {
       if(shot.y > canvas.height || shot.y < 0) { // Remove out of bounds
-        shots.splice(shot, 1); 
+        gameArea.shots().splice(shot, 1); 
       }
       else { // advance
         shot.y += shot.yVelocity * secondsPassed;
@@ -891,7 +857,7 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
     // STANDBY3: Only pay attention to front row for now
     // let thisVader = invadarr.a[1][index]; // get value of invader in question
 
-    shots.forEach(function(shot) {
+    gameArea.shots().forEach(function(shot) {
       let collides = intersect(shot, token); // Way to fix this (?)
       if (collides) {
         shot.collided = true;
@@ -901,7 +867,7 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
         // if(!token.collided) { 
         // if(!inv._getCollided(index)) {
         if(!token.collided) {
-          shots.splice(shot, 1); // Intact token disappears along with bullet
+          gameArea.shots().splice(shot, 1); // Intact token disappears along with bullet
           // [Bullet => collision]
           // invadarr.a[1][index].collided = true;
           token.collided = true;
@@ -912,13 +878,13 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
 
   this.draw = function() {
     // Extra: displays number of bullets on the window/screen   
-    document.getElementById("bull").innerHTML = "bullets: " + shots.length;
-    shots.forEach(function(shot) {
+    gameArea.shots().forEach(function(shot) {
       shot.draw();
     });
   }
 }
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Extra~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 function framesPerSecond() { // Displays fps on canvas
 //   // Extra: Display FPS on canvas                  
   ctx.fillStyle = "rgba(0, 0, 0, 0)";
