@@ -291,7 +291,7 @@ var gameArea = (function() { // Singleton
       toggle(canvas); // Hide canvas
       document.getElementById("demo").innerHTML = "Game stop";
       document.getElementById("play-button").innerHTML = "Play";
-      this.reset();
+      this.reset(); // Reset important variables
     }
   }
 
@@ -299,7 +299,6 @@ var gameArea = (function() { // Singleton
   function _start() {
     // PREP
     // Reset important variables
-    this.reset();
 
     // Update canvas
     canvas.width  = window.innerWidth;
@@ -316,7 +315,6 @@ var gameArea = (function() { // Singleton
     inv.setup();
     // Initialize structure that displays bullets (clears array)
     //shotKeeper.setup();
-    this._shots = [];
 
     // LOOP
     // Initiate gameLoop, request function gives the browser some air while 
@@ -335,9 +333,11 @@ var gameArea = (function() { // Singleton
 
     // clearInterval(this.interval); // nothing should be moving/responding
     // clearAnimationFrame(this.animationFrame);
-    secondsPassed = 0;
-    oldTimeStamp  = 0;
-    timeStamp     = 0; // TODO: Reset timeStamp(can it be done?)
+    secondsPassed  = 0;
+    oldTimeStamp   = 0;
+    timeStamp      = 0; // TODO: Reset timeStamp(can it be done?)
+
+    _shots    = [];
   }
 
   return { 
@@ -365,10 +365,9 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
 
   cassie.update(secondsPassed);
   cassie.shoot(); // Update shotkeeper with any bullets player shot
-  // TODO: Add secondsPassed for consistency
+
   //WIP: Gonna edit invaders to move according to time passed
   inv.update();
-
   inv.shoot();
 
   shotKeeper.update();
@@ -442,24 +441,7 @@ function gameToken(width = 50, height = 70, color = "blue", x = 0, y = 0, xVeloc
   this.update = function() { // Stub
 
   }
-
-//------------------------------------------------------------------------------
-// RPART - Relocate to renderer
-  // RELOCATE <- won't be needed here later
-  this.draw = function() { // Redraw according to new positioning  
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.7; // Opacity
-    ctx.fillRect(this.x, this.y, this.width, this.height);
-  }
-
-  // this.draw = function() { // Redraw according to new positioning
-  // Note: Incorrect approach
-
-  //   // renderer.push()
-  //   _entities.push()
-  // }
 }
-//------------------------------------------------------------------------------
  
 function invaderToken(width, height, color, x, y, xVelocity = 1, yVelocity = 1, collided = false, fireRate =  1 /*BUG1 fireRate*/) { //BULL1 
 
@@ -577,7 +559,6 @@ function invaders(invaderCount = 1,
                                                  collided:        false*/));
         gameArea.entities().push(gameArea.invadarr().a[0][i]);
         // Another row in front of previous row (y + 50)
-        // gameArea.invadarr().a[1].push(
         gameArea.invadarr().a[1].push(
                                 new invaderToken(/*width:*/       vw, 
                                                  /*height:*/      vh, 
@@ -699,7 +680,6 @@ function invaders(invaderCount = 1,
 
 // Optional: With inheritance, can add new properties at the end of 'fireRate'
 function playerToken(width, height, color, x, y, xVelocity = 1000, yVelocity = 1, /* BULL1->xVelocity = 125*/ collided = false, fireRate = .25) {
-
   // playerToken inherits from more generic gameToken class
   gameToken.call(this, width, height, color, x, y, xVelocity, yVelocity, collided);
   this.prototype = Object.create(gameToken.prototype);
@@ -708,9 +688,18 @@ function playerToken(width, height, color, x, y, xVelocity = 1000, yVelocity = 1
       enumerable: false, // so that it does not appear in 'for in' loop
       writable: true 
   });
+  this.width  = width;
+  this.height = height;
+  this.color  = color;
+
+  this.x = x;
+  this.y = y;
 
   this.xVelocity = xVelocity;
   this.yVelocity = yVelocity;
+
+  this.collided  = collided;
+  this.fireRate  = fireRate;
 
   var cooldown = 0;
 
@@ -718,8 +707,8 @@ function playerToken(width, height, color, x, y, xVelocity = 1000, yVelocity = 1
     // Set up player token's positioning (bottom-center)
     // Subtracting(read: displacing) by player token dimensions to accomodate 
     // for token's size 
-    cassie.x = canvas.width/2 - cassie.width/2;
-    cassie.y = canvas.height  - cassie.height;
+    this.x = canvas.width/2 - this.width/2;
+    this.y = canvas.height  - this.height;
   }
 
   this.update = function(secondsPassed) {
@@ -777,18 +766,6 @@ function playerToken(width, height, color, x, y, xVelocity = 1000, yVelocity = 1
       this.x = dist;
     }
   }
-  // Relocation
-  // this.draw = function() { // Redraw according to new positioning   
-  //   // ctx.fillStyle = color;
-  //   // ctx.globalAlpha = 0.7; // Opacity
-  //   ctx.drawImage(imgRepo.player_token, this.x, this.y, this.width, this.height);
-  // }
-
-  // Relocation: Player token drawing moved to renderer
-
-  // this.draw = function() { // Relocation (WiP -> will be entirely rendered in the renderer without having to be called here, maybe)
-    // renderer.render();
-  // }
 
   this.shoot = function() {
     let space = activeKeys[Space]; // Press Enter to shoot
@@ -873,13 +850,6 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
           token.collided = true;
         }
       }
-    });
-  }
-
-  this.draw = function() {
-    // Extra: displays number of bullets on the window/screen   
-    gameArea.shots().forEach(function(shot) {
-      shot.draw();
     });
   }
 }
