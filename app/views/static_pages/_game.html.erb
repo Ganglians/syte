@@ -136,14 +136,14 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
   }
 
   // WiP: No invader sprite yet. Draw as a plain token (a rectangle)
-  // function _drawInvader(context, token) { // render invader tokens
-
-  // }
+  function _drawInvader(context, token) { // render invader tokens
+    _drawRectangle(context, token);
+  }
 
   function _render() {
     // TODO: Move the gloval canvas variables here
     // var canvas = document.getElementById("game-canvas");
-    // var context = canvas.getContext("2d");
+    var ctx = canvas.getContext("2d");
 
     // Example of a more C ++ approach to the loop:
     // var i,
@@ -163,6 +163,9 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
       if(!entity.collided) { // Intact tokens only
         if(entity instanceof playerToken) {
           _drawPlayer(ctx, entity);
+        }
+        else if(entity instanceof invaderToken) {
+          _drawInvader(ctx, entity);
         }   
         else { // Default, rectangular polygon
           _drawRectangle(ctx, entity);
@@ -175,8 +178,13 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
     });
   }
 
+  function _clear() { // clear entire canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
   return { // Accessors
-    render: _render // Public method(s)
+    render: _render, // Public method(s)
+    clear:  _clear
   };
 
 })();
@@ -188,6 +196,8 @@ var physics = (function () { //MOVE DOWN below gamearea
     gameArea.entities.forEach(function(entity) {
       // TODO: Need to implement both X and Y directions (only use one of those atm)
       // entity.y += entity.y.direction;
+
+      
     });
   }
 
@@ -392,7 +402,7 @@ function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
   });
 
   // [ 3 ] CLEAR
-  gameArea.clear();
+  renderer.clear();
 
   // [ 4 ] DRAW
   // cassie.draw(); // Relocation: moved to renderer
@@ -454,15 +464,15 @@ function invaderToken(width, height, color, x, y, xVelocity = 1, yVelocity = 1, 
       writable: true 
   });  
 
-  this.width = width;
+  this.width  = width;
   this.height = height;
-  this.color = color;
+  this.color  = color;
   this.x = x;
   this.y = y;
   this.xVelocity = xVelocity;
   this.yVelocity = yVelocity;
-  this.collided = collided;
-  this.fireRate = fireRate;
+  this.collided  = collided;
+  this.fireRate  = fireRate;
 
   var cooldown = 0; // Time to wait until next shot is available
   var shotChance = 1; // % (chance of shot per movement)
