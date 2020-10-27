@@ -12,13 +12,11 @@ Your browser does not support the HTML canvas tag.
 </canvas>
 <!-- Button click event: press to start the game script-->
 <button id="play-button" type="button" onclick="gameArea.tog()">Play</button>
-<!-- Game tokens @REP1 -->
-<!-- < % = image_tag("token_cassie.svg", class: "hidden", id: "token_cassie") %> -->
-<!-- <img src="/assets/token_cassie.svg" class="token_cassie"/> -->
 <!-- ------------------------------------------------- -->
 <div class="hero-one">
 
-    <img alt="sun" src="syte_sun.svg" class="sun"/>
+    <!-- <img alt="sun" src="bg_sun.svg" class="sun"/> -->
+    <%= image_tag("bg_sun.svg", alt: "sun", class: "sun") %>
     <!-- Text will change when user clicks play button -->
     <p id="demo"> JS Demonstration </p>
     <p id="bull"> Bullets: 0 </p>
