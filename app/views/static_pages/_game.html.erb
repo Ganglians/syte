@@ -102,8 +102,6 @@ var go = true;
 // Capture values when page loads
 let canvas, ctx; // Set with 'init()' after page is loaded
 
-let startLoop = false; // Starts/stops gameloop
-
 // Keeps record of all shots/bullets
 this.shotKeeper = new shotKeeper();
 
@@ -267,8 +265,14 @@ var physics = (function () { //MOVE DOWN below gamearea
 
 })();
 
+// ████████████████████████████████████████████████████████████████████████████
+// ████████████████████████████████████████████████████████████████████████████
+// ████████████████████████████████████████████████████████████████████████████
+// ████████████████████████████████████████████████████████████████████████████
 // Entirety of game's 'screen', where all the visible game pieces are
 var gameArea = (function() { // Singleton
+  // variables
+  let startLoop = false; // Starts/stops gameloop
   // Hold all game tokens used in the game
   var _entities = []; // Holds all (generic) game tokens
   // ---------------------------------------------------------------------------
@@ -277,9 +281,7 @@ var gameArea = (function() { // Singleton
   // objects, in general can keep everything in one var, but a modular 
   // implementation 
 
-  // TODO: Group related functions together into self-contained objects. 
-  //
-  
+  // methods
   // var _invaders =  []; // Holds all invaders
   var _invadarr = (function() { // 2d invader array
     //  a: {},  // Associative array, doesn't have built-in methods (ex. length())
@@ -377,7 +379,62 @@ var gameArea = (function() { // Singleton
     // Initiate gameLoop, request function gives the browser some air while 
     // looping and time the game loop to be in-sync with the browser repaint
     startLoop = true;
-    window.requestAnimationFrame(gameLoop);
+    window.requestAnimationFrame(_gameLoop);
+  }
+
+  function _gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
+    if(!startLoop) {// Conditional that stops loop 
+      return;
+    }
+    // [ 1 ] UPDATE
+    // dt = delta t. the difference in time (seconds) between this and last frame
+    dt = (timeStamp - oldTimeStamp)/1000;
+    dt = Math.min(0.1, dt);
+    oldTimeStamp  = timeStamp;
+
+    // Calculate FPS (for the display)
+    fps = Math.round(1/dt);
+
+    cassie.update(dt);
+    cassie.shoot(); // Update shotkeeper with any bullets player shot
+
+    //WIP: Gonna edit invaders to move according to time passed
+    inv.update();
+    inv.shoot();
+
+    shotKeeper.update();
+    document.getElementById("bull").innerHTML = "bullets: " + gameArea.shots().length;
+
+    // [ 2 ] COLLISION DETECTION
+    // [Bullet => Check for collision]
+    // TODO: Cassie (i.e. player token collision)
+    // cassie.intersect(); 
+    // [Bullets => iterate invaders]
+
+    // Invader collision check (only first row for now)
+    gameArea.invadarr().a.forEach(function(row, rind) { // row index
+      row.forEach(function(invader, cind) { // column index
+        shotKeeper.collisionCheck(invader);
+        // WIP
+        // If a backup invader exists, begins attacking after frontmost dies BULL1
+        // if(invader.collision && rind > 0) {
+        //   inv.invadarr.f[rind][cind] = inv.invadarr.a[rind - 1][cind];
+        // }
+      });
+    });
+
+    // [ 3 ] CLEAR
+    renderer.clear();
+
+    // [ 4 ] DRAW
+    // cassie.draw(); // Relocation: moved to renderer
+    renderer.render();
+    framesPerSecond(); // Just a display //BUG1 - Displaying bullets for now
+    // TODO: Reset timeStamp(?) Not sure if possible
+
+    // Keep requesting further iterations of 'gameLoop' to animate game
+    // TODO: Reset timeStamp(?)
+    window.requestAnimationFrame(_gameLoop);
   }
 
   function _clear() { // Clears the whole canvas
@@ -398,70 +455,20 @@ var gameArea = (function() { // Singleton
   }
 
   return { 
-    tog:   _tog, // method accessors
-    start: _start,
-    clear: _clear,
-    reset: _reset,
+    tog:      _tog, // method accessors
+    start:    _start,
+    gameLoop: _gameLoop,
+    clear:    _clear,
+    reset:    _reset,
     entities: function() { return _entities; }, // data accessors
     invadarr: function() { return _invadarr; },
     shots:    function() { return _shots; }
   };
 })();
-
-function gameLoop(timeStamp) { // TODO: Reset timeStamp(?)
-  if(!startLoop) {// Conditional that stops loop 
-    return;
-  }
-  // [ 1 ] UPDATE
-  // dt = delta t. the difference in time (seconds) between this and last frame
-  dt = (timeStamp - oldTimeStamp)/1000;
-  dt = Math.min(0.1, dt);
-  oldTimeStamp  = timeStamp;
-
-  // Calculate FPS (for the display)
-  fps = Math.round(1/dt);
-
-  cassie.update(dt);
-  cassie.shoot(); // Update shotkeeper with any bullets player shot
-
-  //WIP: Gonna edit invaders to move according to time passed
-  inv.update();
-  inv.shoot();
-
-  shotKeeper.update();
-  document.getElementById("bull").innerHTML = "bullets: " + gameArea.shots().length;
-
-  // [ 2 ] COLLISION DETECTION
-  // [Bullet => Check for collision]
-  // TODO: Cassie (i.e. player token collision)
-  // cassie.intersect(); 
-  // [Bullets => iterate invaders]
-
-  // Invader collision check (only first row for now)
-  gameArea.invadarr().a.forEach(function(row, rind) { // row index
-    row.forEach(function(invader, cind) { // column index
-      shotKeeper.collisionCheck(invader);
-      // WIP
-      // If a backup invader exists, begins attacking after frontmost dies BULL1
-      // if(invader.collision && rind > 0) {
-      //   inv.invadarr.f[rind][cind] = inv.invadarr.a[rind - 1][cind];
-      // }
-    });
-  });
-
-  // [ 3 ] CLEAR
-  renderer.clear();
-
-  // [ 4 ] DRAW
-  // cassie.draw(); // Relocation: moved to renderer
-  renderer.render();
-  framesPerSecond(); // Just a display //BUG1 - Displaying bullets for now
-  // TODO: Reset timeStamp(?) Not sure if possible
-
-  // Keep requesting further iterations of 'gameLoop' to animate game
-  // TODO: Reset timeStamp(?)
-  window.requestAnimationFrame(gameLoop);
-}
+// ████████████████████████████████████████████████████████████████████████████
+// ████████████████████████████████████████████████████████████████████████████
+// ████████████████████████████████████████████████████████████████████████████
+// ████████████████████████████████████████████████████████████████████████████
 
 // Abstract objects/classes
 function rectangle(_x = 0, _y = 0, width = 1, height = 1) {
