@@ -61,14 +61,6 @@ window.addEventListener('keyup', function(event) {
 }); 
 
 // *****************************GLOBAL VARIABLES*******************************
-// Player token's name
-var cassie = new playerToken(new vector2d(0, 0), 70, 70, new vector2d(125, 0));
-
-var inv = new invaders(/*totalInvaders*/ 4, 
-                      {invaderWidth: 80, invaderHeight: 20}, 
-                      /*gapSpace*/       30, 
-                      /*velocity*/       new vector2d(100, 10),
-                      /*frameRate*/      100);
 // TODO: Add a x and y velocity (invaders should have a difference in case of needing it later)
 
 // Object list of key presses ('keydown'). False for unpressed or missing
@@ -153,13 +145,15 @@ function vectorNormal(v) { // returns normalized vector (length = 1)
 
 // Images
 // Load game sprites/images
-var imgRepo = new function(nImages = 1) { // Singleton
+var imgRepo = new function(nImages = 1) { // Class instance
   // IMAGE DEFINITIONS
   this.player_token = new Image();
   
   // IMAGE LOADING
   // Don't start game until all images are done loading
-  this.nImages = nImages; let nLoaded = 0;
+  this.nImages = nImages; 
+  let nLoaded = 0;
+  
   let imgLoaded = function() {
     if(nLoaded ++ == nImages) {
       // window.init(); // Start game TODO: Create a title screen (and only load
@@ -171,7 +165,7 @@ var imgRepo = new function(nImages = 1) { // Singleton
     imgLoaded(); // Increment total loaded images by one
   }
   // SET IMAGE SOURCES
-  this.player_token.src = "/assets/token_cassie.svg";
+  this.player_token.src = "/assets/token_player1.svg";
 };
 
 // Renderer object
@@ -272,13 +266,21 @@ var physics = (function () { //MOVE DOWN below gamearea
 // Entirety of game's 'screen', where all the visible game pieces are
 var gameArea = (function() { // Singleton
   // variables
-  let startLoop = false; // Starts/stops gameloop
+  // game token variables:
   // Hold all game tokens used in the game
   var _entities = []; // Holds all (generic) game tokens
-  // ---------------------------------------------------------------------------
+  // Player token's name
+  var _player1 = new playerToken(new vector2d(0, 0), 70, 70, new vector2d(125, 0));
+  // --------------------------------------------------------------------------
   // TODO:Attempt to separate game objects from their drawing and physics by
   // keeping their data here and implementing the other actions in two different
   // objects, in general can keep everything in one var, but a modular 
+  // TODO: Replace _inv with _inv and return the _inv equivalent, see if anything needs the _inv and replace it with the following call: gameArea._inv()
+  var _inv = new invaders(/*totalInvaders*/ 4, 
+                        {invaderWidth: 80, invaderHeight: 20}, 
+                        /*gapSpace*/       30, 
+                        /*velocity*/       new vector2d(100, 10),
+                        /*frameRate*/      100); // how often they move forward (in one huge step since time isn't accounted for in their 'velocity', causing a shuttering/blinking effect)
   // implementation 
 
   // methods
@@ -325,12 +327,15 @@ var gameArea = (function() { // Singleton
       addRows: _addRows,
       clear:   _clear,
       setup:   _setup,
-      totRows: function() { return r; } // data accessors
+      totRows:  function()  { return r; }, // data accessors
+      totFront: function()  { return f; }
     };
   })();
 
+  // gameArea variables:
   var _shots  =  []; // Holds all bullets
-//-----------------------------------------------------------------------------
+  let startLoop = false; // Starts/stops gameloop
+  // --------------------------------------------------------------------------
   function _tog() {
     //BUG1
     if (go == true) { // Initiate game    
@@ -363,15 +368,15 @@ var gameArea = (function() { // Singleton
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    cassie.setup();
+    _player1.setup();
 
     //RELOCATION
-    _entities.push(cassie);
+    _entities.push(_player1);
 
 
     // Set up initial invader rows (use from stack if previous game played 
     // already)
-    inv.setup();
+    _inv.setup();
     // Initialize structure that displays bullets (clears array)
     //shotKeeper.setup();
 
@@ -395,12 +400,12 @@ var gameArea = (function() { // Singleton
     // Calculate FPS (for the display)
     fps = Math.round(1/dt);
 
-    cassie.update(dt);
-    cassie.shoot(); // Update shotkeeper with any bullets player shot
+    _player1.update(dt);
+    _player1.shoot(); // Update shotkeeper with any bullets player shot
 
     //WIP: Gonna edit invaders to move according to time passed
-    inv.update();
-    inv.shoot();
+    _inv.update();
+    _inv.shoot();
 
     shotKeeper.update();
     document.getElementById("bull").innerHTML = "bullets: " + gameArea.shots().length;
@@ -408,7 +413,7 @@ var gameArea = (function() { // Singleton
     // [ 2 ] COLLISION DETECTION
     // [Bullet => Check for collision]
     // TODO: Cassie (i.e. player token collision)
-    // cassie.intersect(); 
+    // _player1.intersect(); 
     // [Bullets => iterate invaders]
 
     // Invader collision check (only first row for now)
@@ -418,7 +423,7 @@ var gameArea = (function() { // Singleton
         // WIP
         // If a backup invader exists, begins attacking after frontmost dies BULL1
         // if(invader.collision && rind > 0) {
-        //   inv.invadarr.f[rind][cind] = inv.invadarr.a[rind - 1][cind];
+        //   _inv.invadarr.f[rind][cind] = _inv.invadarr.a[rind - 1][cind];
         // }
       });
     });
@@ -427,7 +432,7 @@ var gameArea = (function() { // Singleton
     renderer.clear();
 
     // [ 4 ] DRAW
-    // cassie.draw(); // Relocation: moved to renderer
+    // _player1.draw(); // Relocation: moved to renderer
     renderer.render();
     framesPerSecond(); // Just a display //BUG1 - Displaying bullets for now
     // TODO: Reset timeStamp(?) Not sure if possible
@@ -460,9 +465,12 @@ var gameArea = (function() { // Singleton
     gameLoop: _gameLoop,
     clear:    _clear,
     reset:    _reset,
+
     entities: function() { return _entities; }, // data accessors
+    player1:  function() { return _player1;  },
+    inv:      function() { return _inv;      },
     invadarr: function() { return _invadarr; },
-    shots:    function() { return _shots; }
+    shots:    function() { return _shots;    }
   };
 })();
 // ████████████████████████████████████████████████████████████████████████████
@@ -568,8 +576,7 @@ function gameToken(position, width = 50, height = 70, velocity, collided = false
   }
 }
 
-function invaderToken(position, width, height, velocity, collided = false, 
-  color = "blue", fireRate =  1 /*BUG1 fireRate*/) { //BULL1 
+function invaderToken(position, width, height, velocity, collided = false, color = "blue", fireRate =  1 /*BUG1 fireRate*/) { //BULL1 
   // Ref: javascript function call():
   // call gameToken with the instance that is 'this' invaderToken object, to
   // pass on the arguments invaderToken has in common with gameToken
@@ -956,7 +963,7 @@ function shotKeeper() { // Object in charge of keeping tabs on all bullets
         // T0D0 ###############################################################
         // [Bullet => Invader intact?]
         // if(!token.collided) { 
-        // if(!inv._getCollided(index)) {
+        // if(!_inv._getCollided(index)) {
         if(!token.collided) {
           gameArea.shots().splice(shot, 1); // Intact token disappears along with bullet
           // [Bullet => collision]
