@@ -95,7 +95,6 @@ var go = true;
 let canvas, ctx; // Set with 'init()' after page is loaded
 
 // Keeps record of all shots/bullets
-this.shotKeeper = new shotKeeper();
 
 // Used to display frames per second
 let timeStamp = 0;
@@ -153,7 +152,7 @@ var imgRepo = new function(nImages = 1) { // Class instance
   // Don't start game until all images are done loading
   this.nImages = nImages; 
   let nLoaded = 0;
-  
+
   let imgLoaded = function() {
     if(nLoaded ++ == nImages) {
       // window.init(); // Start game TODO: Create a title screen (and only load
@@ -242,7 +241,9 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
 
 })();
 
-var physics = (function () { //MOVE DOWN below gamearea
+var physics = (function () {
+  var _shotKeeper = new _shotKeeper(); // shotKeeper class instance
+
   // Updates 
   // TODO: Also handles collisions
   function _update() {
@@ -253,8 +254,76 @@ var physics = (function () { //MOVE DOWN below gamearea
     });
   }
 
+  // Is there a better way to define an object with properties? Because this 
+  // function will not be used as a data type or anything
+  function _shotKeeper() { // class in charge of keeping tabs on all bullets
+    this.addShot = function(position, width = 5, height = 15, velocity, collided  = false, color = "blue") {
+      // Given where bullet should spawn (x, y) but need to center the bullet
+      // TODO: Make bullet spawn without touching player, account for this 
+      // Can possibly circumvent this by differentiating player and invader
+      // bullets
+      // GRID need to change shot depending on if player or invader shoot it 
+      // (displacement/side it comes out from is different)
+      this.position  = new vector2d(position.x, position.y - height/2);
+      this.width     = width;
+      this.height    = height;
+      this.velocity  = velocity;
+      this.collided  = collided;
+      this.color     = color;
+     
+      gameArea.shots().push(new gameToken(this.position, this.width, this.height, this.velocity, this.collided, this.color));
+    }
+
+    // Redefine clear/draw to render all the bullets. Probably though can use the
+    // same kind of approach as invaders, defining a 'move' property. If so, then
+    // I can DRY out the methods' code into a single function, and use said 
+    // function in each object class!! <- may be unable to due to how certain
+    // things move, and movement is simply adding/subtracting x and y. The draws
+    // are already DRYed out
+    this.update = function() {
+      //TODO: Add collision check, remove if collision
+      // Delete individual shot if it leaves canvas (cleanup)
+      // Movement
+      gameArea.shots().forEach(function(shot) {
+        // Check bounds
+        if(shot.hitbox().top() > canvas.height || shot.hitbox().bottom() < 0) {
+          gameArea.shots().splice(shot, 1);
+        }
+        // **********************************************************************
+        else { // advance
+          shot.position.y += shot.velocity.y * dt;
+        }
+        // **********************************************************************
+      });
+    }
+
+    this.collisionCheck = function(token) {
+      // STANDBY3: Only pay attention to front row for now
+      // let thisVader = invadarr.a[1][index]; // get value of invader in question
+
+      gameArea.shots().forEach(function(shot) {
+        //let collides = intersect(shot, token); // Way to fix this (?)
+        if (shot.hitbox().intersect(token.hitbox())) {
+          shot.collided = true;
+          // Bullet and invader cancel each other
+          // T0D0 ###############################################################
+          // [Bullet => Invader intact?]
+          // if(!token.collided) { 
+          // if(!_inv._getCollided(index)) {
+          if(!token.collided) {
+            gameArea.shots().splice(shot, 1); // Intact token disappears along with bullet
+            // [Bullet => collision]
+            // invadarr.a[1][index].collided = true;
+            token.collided = true;
+          }
+        }
+      });
+    }
+  }
+
   return {
-    update: _update
+    update:     _update,
+    shotKeeper: _shotKeeper
   };
 
 })();
@@ -407,7 +476,7 @@ var gameArea = (function() { // Singleton
     _inv.update();
     _inv.shoot();
 
-    shotKeeper.update();
+    physics.shotKeeper.update();
     document.getElementById("bull").innerHTML = "bullets: " + gameArea.shots().length;
 
     // [ 2 ] COLLISION DETECTION
@@ -419,7 +488,7 @@ var gameArea = (function() { // Singleton
     // Invader collision check (only first row for now)
     gameArea.invadarr().a.forEach(function(row, rind) { // row index
       row.forEach(function(invader, cind) { // column index
-        shotKeeper.collisionCheck(invader);
+        physics.shotKeeper.collisionCheck(invader);
         // WIP
         // If a backup invader exists, begins attacking after frontmost dies BULL1
         // if(invader.collision && rind > 0) {
@@ -605,7 +674,7 @@ function invaderToken(position, width, height, velocity, collided = false, color
         //if(laChance < shotChance) { //@BULL1
           // this.y + height + 1 to ensure bullet doesn't kill origin point  
           //____ fixing this will probably fix program, but the bullets seem to flow nicely atm            
-          shotKeeper.addShot(
+          physics.shotKeeper.addShot(
             /*x:*/            //this.position.x,
             /*y:*/            //this.hitbox().bottom() + this.height + 11,
             /*position:*/     new vector2d(
@@ -887,7 +956,7 @@ function playerToken(position, width, height, velocity, /* BULL1->xVelocity = 12
       // (x,y) displacement accomodates for token's dimensions
       // Shot originates from middle of token and travels up
       // Negative velocity because player's bullets go up
-      // shotKeeper.addShot(5, 10, "yellow", this.x + width/2, this.y - height/2, 
+      // physics.shotKeeper.addShot(5, 10, "yellow", this.x + width/2, this.y - height/2, 
       // Bullet spawns just above the player token 
       // 
       //  [ ]    Bullet height = Token height/2, spawns, a total distance of
@@ -895,7 +964,7 @@ function playerToken(position, width, height, velocity, /* BULL1->xVelocity = 12
       // █████              |
       //   *(x, y) Center   | Token height 
       // █████              |
-      shotKeeper.addShot(/*position*/      new vector2d(
+      physics.shotKeeper.addShot(/*position*/      new vector2d(
                                             this.position.x,
                                             this.hitbox().top() - 5),
                          /*width:*/        5, 
@@ -904,74 +973,6 @@ function playerToken(position, width, height, velocity, /* BULL1->xVelocity = 12
                          /*collided:*/     false,
                          /*color*/         "yellow");
     }
-  }
-}
-
-// Is there a better way to define an object with properties? Because this 
-// function will not be used as a data type or anything
-function shotKeeper() { // Object in charge of keeping tabs on all bullets
-  this.addShot = function(position, width = 5, height = 15, velocity, collided  = false, color = "blue") {
-    // Given where bullet should spawn (x, y) but need to center the bullet
-    // TODO: Make bullet spawn without touching player, account for this 
-    // Can possibly circumvent this by differentiating player and invader
-    // bullets
-    // GRID need to change shot depending on if player or invader shoot it 
-    // (displacement/side it comes out from is different)
-    this.position  = new vector2d(position.x, position.y - height/2);
-    this.width     = width;
-    this.height    = height;
-    this.velocity  = velocity;
-    this.collided  = collided;
-    this.color     = color;
-   
-    gameArea.shots().push(new gameToken(this.position, this.width, this.height,
-      this.velocity, this.collided, this.color));
-  }
-
-  // Redefine clear/draw to render all the bullets. Probably though can use the
-  // same kind of approach as invaders, defining a 'move' property. If so, then
-  // I can DRY out the methods' code into a single function, and use said 
-  // function in each object class!! <- may be unable to due to how certain
-  // things move, and movement is simply adding/subtracting x and y. The draws
-  // are already DRYed out
-  this.update = function() {
-    //TODO: Add collision check, remove if collision
-    // Delete individual shot if it leaves canvas (cleanup)
-    // Movement
-    gameArea.shots().forEach(function(shot) {
-      // Check bounds
-      if(shot.hitbox().top() > canvas.height || shot.hitbox().bottom() < 0) {
-        gameArea.shots().splice(shot, 1);
-      }
-      // **********************************************************************
-      else { // advance
-        shot.position.y += shot.velocity.y * dt;
-      }
-      // **********************************************************************
-    });
-  }
-
-  this.collisionCheck = function(token) {
-    // STANDBY3: Only pay attention to front row for now
-    // let thisVader = invadarr.a[1][index]; // get value of invader in question
-
-    gameArea.shots().forEach(function(shot) {
-      //let collides = intersect(shot, token); // Way to fix this (?)
-      if (shot.hitbox().intersect(token.hitbox())) {
-        shot.collided = true;
-        // Bullet and invader cancel each other
-        // T0D0 ###############################################################
-        // [Bullet => Invader intact?]
-        // if(!token.collided) { 
-        // if(!_inv._getCollided(index)) {
-        if(!token.collided) {
-          gameArea.shots().splice(shot, 1); // Intact token disappears along with bullet
-          // [Bullet => collision]
-          // invadarr.a[1][index].collided = true;
-          token.collided = true;
-        }
-      }
-    });
   }
 }
 
