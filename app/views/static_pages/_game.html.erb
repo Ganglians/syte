@@ -249,8 +249,8 @@ var physics = (function () {
   function _update() {
     gameArea.entities.forEach(function(entity) {
       // TODO: Need to implement both X and Y directions (only use one of those atm)
-      // entity.y += entity.y.direction
-      
+      // entity.y += entity.direction.y * entity.speed.y * dt;
+      //entity.x += entity.direction.x * entity.speed.x * dt;
     });
   }
 
@@ -341,23 +341,15 @@ var physics = (function () {
 var gameArea = (function() { // Singleton
   // variables
   // game token variables:
-  // Hold all game tokens used in the game
-  var _entities = []; // Holds all (generic) game tokens
-  // Player token's name
+  var _entities = []; // Holds all (generic) game tokens used in the game
   var _player1 = new playerToken(new vector2d(0, 0), 70, 70, new vector2d(1, 0), new vector2d(125, 5)); //5 isn't active atm since direction is x axis only
-  // --------------------------------------------------------------------------
-  // TODO:Attempt to separate game objects from their drawing and physics by
-  // keeping their data here and implementing the other actions in two different
-  // objects, in general can keep everything in one var, but a modular 
-  // TODO: Replace _inv with _inv and return the _inv equivalent, see if anything needs the _inv and replace it with the following call: gameArea._inv()
+  // Manages invaders TODO: Any way to remove all invader array methods from invadarr? feel like gameArea should return values for it, then there wouldn't need to be as much nesting (clarity might decrease if not done right though)
   var _inv = new invaders(/*totalInvaders*/ 4, 
                         {invaderWidth: 80, invaderHeight: 20}, 
                         /*gapSpace*/       30, 
                         /*velocity*/       new vector2d(100, 10),
                         /*frameRate*/      100); // how often they move forward (in one huge step since time isn't accounted for in their 'velocity', causing a shuttering/blinking effect)
-  // implementation 
 
-  // methods
   // var _invaders =  []; // Holds all invaders
   let _invadarr = (function() { // 2d invader array
     //  a: {},  // Associative array, doesn't have built-in methods (ex. length())
@@ -405,9 +397,10 @@ var gameArea = (function() { // Singleton
       totFront: function()  { return f; }
     };
   })();
+  var _enemiesHitbox = new rectangle(0, 0, 0, 0);
+  let _shots  =  []; // Holds all bullets
 
   // gameArea variables:
-  let _shots  =  []; // Holds all bullets
   let startLoop = false; // Starts/stops gameloop
   // --------------------------------------------------------------------------
   function _tog() {
@@ -534,18 +527,21 @@ var gameArea = (function() { // Singleton
     _shots    = [];
   }
 
-  return { 
-    tog:      _tog, // method accessors
+  return {
+    // method accessors:
+    tog:      _tog,
     start:    _start,
     gameLoop: _gameLoop,
     clear:    _clear,
     reset:    _reset,
 
-    entities: function() { return _entities; }, // data accessors
-    player1:  function() { return _player1;  },
-    inv:      function() { return _inv;      },
-    invadarr: function() { return _invadarr; },
-    shots:    function() { return _shots;    }
+    // data accessors:
+    entities:      function() { return _entities; },
+    player1:       function() { return _player1;  },
+    inv:           function() { return _inv;      },
+    invadarr:      function() { return _invadarr; },
+    enemiesHitbox: function() { return _enemiesHitbox; },
+    shots:         function() { return _shots;    }
   };
 })();
 // ████████████████████████████████████████████████████████████████████████████
@@ -605,6 +601,36 @@ function rectangle(_x = 0, _y = 0, width = 1, height = 1) {
         return false;
       }
         return true;
+  }
+  // TODO: Conglomerate hitbox of all enemies (used to detect invaders' contact w/ canvas boundary to avoid having to re-calculate each time a leftmost or rightmost columns of invaders disappears entirely -> makes it easier to update a hitbox than to update each individually and easier to debug)
+  // unify returns a rectangle that encompasses the two rectangles called as arguments.
+  //       w i d t h
+  // (0, 0) -- -- -- > (n, 0)  _x
+  //      | (min x & y)
+  //      |*
+  // h    |  ████████░░        ░░ = rectangle that covers both rectangles
+  // e    |  ████████░░
+  // i    |  ████████░░
+  // g    |  ░░░░░░░░░░
+  // h    |  ░░░░░░░███
+  // t    |  ░░░░░░░███ * max height & width
+  //      |
+  //      V
+  //      (0, m)def m ∃ x s.t. when m1 < m2, f(m1) < f(m2) (strictly increasing)
+  //    _y
+  this.union = function(r1, r2) {
+    // Out of both rectangles, see which of their x and y's come first
+    let x = Math.min(r1.x, r2.x);
+    let y = Math.min(r1.y, r2.y);
+
+    // Find absolute values of the max width and height you need for the dimensions of a rectangle that covers r1 and r2, sort of like the distance formula for the points that are furthest appart
+    width = Math.max( r1.right(), r2.right() ) 
+            - Math.min( r1.left(), r2.left() );
+
+    height = Math.max( r1.bottom(), r2.bottom() ) 
+             - Math.min( r1.top(), r2.top() );
+
+    return new rectangle(x, y, width, height);          
   }
 }
 
