@@ -348,7 +348,7 @@ var gameArea = (function() { // Singleton
                         {invaderWidth: 80, invaderHeight: 20}, 
                         /*gapSpace*/       30, 
                         /*velocity*/       new vector2d(100, 10),
-                        /*frameRate*/      100); // how often they move forward (in one huge step since time isn't accounted for in their 'velocity', causing a shuttering/blinking effect)
+                        /*frameRate*/      30); // how often they move forward (in one huge step since time isn't accounted for in their 'velocity', causing a shuttering/blinking effect)
 
   // var _invaders =  []; // Holds all invaders
   let _invadarr = (function() { // 2d invader array
@@ -397,7 +397,7 @@ var gameArea = (function() { // Singleton
       totFront: function()  { return f; }
     };
   })();
-  var _enemiesHitbox = new rectangle(0, 0, 0, 0);
+  let _invaderFieldHitbox = new rectangle(0, 0, 0, 0);
   let _shots  =  []; // Holds all bullets
 
   // gameArea variables:
@@ -430,6 +430,7 @@ var gameArea = (function() { // Singleton
   function _start() {
     // PREP
     // Reset important variables
+    _invaderFieldHitbox = new rectangle(0,0,0,0);
 
     // Update canvas
     canvas.width  = window.innerWidth;
@@ -444,9 +445,10 @@ var gameArea = (function() { // Singleton
     // Set up initial invader rows (use from stack if previous game played 
     // already)
     _inv.setup();
+    // set/reset hitbox that covers all invaders
+    _invaderFieldHitbox = new rectangle(0, 0, 0, 0);
     // Initialize structure that displays bullets (clears array)
     //shotKeeper.setup();
-
     // LOOP
     // Initiate gameLoop, request function gives the browser some air while 
     // looping and time the game loop to be in-sync with the browser repaint
@@ -467,12 +469,25 @@ var gameArea = (function() { // Singleton
     // Calculate FPS (for the display)
     fps = Math.round(1/dt);
 
+    _invadarr.a.forEach(function(row) { // Define collective invader hitbox
+      _invaderFieldHitbox = row.reduce(function(total, enemy) {
+        if(!enemy.collided) {
+          return rectUnion(total, enemy.hitbox());
+        }
+        else {
+          return total;
+        }
+      }, undefined);
+    });
+      // define/update hitbox representing invader bounds
+      //_invaderFieldHitbox = _invadarr.a.reduce(function(total, r) { return rectUnion(total, r.hitbox); }, undefined);
+
     _player1.update(dt);
     _player1.shoot(); // Update shotkeeper with any bullets player shot
 
     //WIP: Gonna edit invaders to move according to time passed
     _inv.update();
-    _inv.shoot();
+    //_inv.shoot();
 
     physics.shotKeeper.update();
     document.getElementById("bull").innerHTML = "bullets: " + _shots.length;
@@ -536,12 +551,12 @@ var gameArea = (function() { // Singleton
     reset:    _reset,
 
     // data accessors:
-    entities:      function() { return _entities; },
-    player1:       function() { return _player1;  },
-    inv:           function() { return _inv;      },
-    invadarr:      function() { return _invadarr; },
-    enemiesHitbox: function() { return _enemiesHitbox; },
-    shots:         function() { return _shots;    }
+    entities:           function() { return _entities; },
+    player1:            function() { return _player1;  },
+    inv:                function() { return _inv;      },
+    invadarr:           function() { return _invadarr; },
+    invaderFieldHitbox: function() { return _invaderFieldHitbox; },
+    shots:              function() { return _shots;    }
   };
 })();
 // ████████████████████████████████████████████████████████████████████████████
@@ -550,22 +565,22 @@ var gameArea = (function() { // Singleton
 // ████████████████████████████████████████████████████████████████████████████
 
 // Abstract objects/classes
-function rectangle(_x = 0, _y = 0, width = 1, height = 1) {
+function rectangle(x = 0, y = 0, width = 1, height = 1) {
   // Constructor lines
-  this._x      = _x;
-  this._y      = _y;
+  this.x      = x;
+  this.y      = y;
   this.height = height;
   this.width  = width;
   // Rectangle objects exist in the 2D canvas, and canvas coordinates are as
   // follows:
   //       w i d t h
-  // (0, 0) -- -- -- >(1,0)   _x
+  // (0, 0) -- -- -- >(1,0)   x
   // h    | ████████    (top)
   // e    | ████████
   // i    | ████████    (bottom)
   // g    V(0,1)
   // h
-  // t    _y
+  // t    y
   //
   // Meaning the y-axis is upside-down compared to y-axis in the standard
   // coordinate plane. Even though the canvas' positive y-axis lies on the 4th
@@ -576,19 +591,19 @@ function rectangle(_x = 0, _y = 0, width = 1, height = 1) {
 
   // Methods return _x,_y coordinates of rectangle's corners
   this.left = function() {
-    return this._x;
+    return this.x;
   }
 
   this.right = function() {
-    return this._x + this.width;
+    return this.x + this.width;
   }
 
   this.top = function() {
-    return this._y;
+    return this.y;
   }
 
   this.bottom = function() {
-    return this._y + this.height;
+    return this.y + this.height;
   }
 
   // Meethod to check if two rectangles intersect
@@ -602,36 +617,43 @@ function rectangle(_x = 0, _y = 0, width = 1, height = 1) {
       }
         return true;
   }
-  // TODO: Conglomerate hitbox of all enemies (used to detect invaders' contact w/ canvas boundary to avoid having to re-calculate each time a leftmost or rightmost columns of invaders disappears entirely -> makes it easier to update a hitbox than to update each individually and easier to debug)
-  // unify returns a rectangle that encompasses the two rectangles called as arguments.
-  //       w i d t h
-  // (0, 0) -- -- -- > (n, 0)  _x
-  //      | (min x & y)
-  //      |*
-  // h    |  ████████░░        ░░ = rectangle that covers both rectangles
-  // e    |  ████████░░
-  // i    |  ████████░░
-  // g    |  ░░░░░░░░░░
-  // h    |  ░░░░░░░███
-  // t    |  ░░░░░░░███ * max height & width
-  //      |
-  //      V
-  //      (0, m)def m ∃ x s.t. when m1 < m2, f(m1) < f(m2) (strictly increasing)
-  //    _y
-  this.union = function(r1, r2) {
-    // Out of both rectangles, see which of their x and y's come first
-    let x = Math.min(r1.x, r2.x);
-    let y = Math.min(r1.y, r2.y);
+}
 
-    // Find absolute values of the max width and height you need for the dimensions of a rectangle that covers r1 and r2, sort of like the distance formula for the points that are furthest appart
-    width = Math.max( r1.right(), r2.right() ) 
-            - Math.min( r1.left(), r2.left() );
-
-    height = Math.max( r1.bottom(), r2.bottom() ) 
-             - Math.min( r1.top(), r2.top() );
-
-    return new rectangle(x, y, width, height);          
+// TODO: Conglomerate hitbox of all enemies (used to detect invaders' contact w/ canvas boundary to avoid having to re-calculate each time a leftmost or rightmost columns of invaders disappears entirely -> makes it easier to update a hitbox than to update each individually and easier to debug)
+// rectUnion returns a rectangle that encompasses the two rectangles used as arguments in the r1, r2 parameters:
+//       w i d t h
+// (0, 0) -- -- -- > (n, 0)  _x
+//      | (min x & y)
+//      |*         [r1]
+// h    |  ████████░░        ░░ = rectangle that covers both rectangles
+// e    |  ████████░░
+// i    |  ████████░░
+// g    |  ░░░░░░░░░░
+// h    |  ░░░░░░░███ [r2]
+// t    |  ░░░░░░░███ * max height & width
+//      |
+//      V
+//      (0, m)def m ∃ x s.t. when m1 < m2, f(m1) < f(m2) (strictly increasing)
+//    _y
+function rectUnion(r1, r2) {
+  // Out of both rectangles, see which of their x and y's come first
+  // Edge cases
+  if(r1 == undefined) {
+    return r2;
   }
+  if(r2 == undefined) {
+    return r1;
+  }
+
+  let x = Math.min(r1.x, r2.x);
+  let y = Math.min(r1.y, r2.y);
+
+  // Find absolute values of the max width and height you need for the dimensions of a rectangle that covers r1 and r2, sort of like the distance formula for the points that are furthest appart
+  let width = Math.max(r1.right(), r2.right()) - Math.min(r1.left(), r2.left());
+
+  let height = Math.max(r1.bottom(), r2.bottom()) - Math.min(r1.top(), r2.top());
+
+  return new rectangle(x, y, width, height);          
 }
 
 // Generic game token
@@ -694,6 +716,7 @@ function invaderToken(position, width, height, direction, speed, collided = fals
 
   var cooldown   = 0; // Time until next shot is available
   var shotChance = 1; // % chance of firing a shot
+  this.wait = false; // decides when invader can move
 
   this.shoot = function () {
       cooldown += dt;
@@ -726,8 +749,8 @@ function invaders(invaderCount = 1,
                  {invaderWidth = 10, invaderHeight = 10}, 
                  gapSpace = 40, 
                  velocity, 
-                 frameRate = 10,
-                 invaderRows = 3) { // Makes invaders movement blocky  
+                 frameRate = 10, // Makes invaders movement blocky
+                 invaderRows = 2) {  
 
   this.invaderCount = invaderCount;
   // invadarr.c = invaderCount; // Number of invaders per row (read: columns)
@@ -827,14 +850,18 @@ function invaders(invaderCount = 1,
     // velocity = {x: 10, y: 1};
     wait = false;
     // Reference for vaders on both ends of array
-    vLeftmost  = gameArea.invadarr().a[0][0];
-    vRightmost = gameArea.invadarr().a[0][gameArea.invadarr().a[0].length - 1];
+    //vLeftmost  = gameArea.invadarr().a[0][0];
+    //vRightmost = gameArea.invadarr().a[0][gameArea.invadarr().a[0].length - 1];
     //vRightmost.xVelocity = 10; /*BUG1: magnitude = 30 */ // TODO: Replace vRightmost.magnitude with just an ordinary instance of magnitude (individual invaders might not need a speedboost defined, so it's wasted on them)
   }
 
   this.update = function() { // Update positioning
     if (frameNum ++ >= frameUpper) { // causes a blink/flicker effect
       frameNum = 0; // Reset frame
+
+      vLeftmost = gameArea.invaderFieldHitbox().left();
+      //console.log("invaderFieldHitbox.left: " + gameArea.invaderFieldHitbox().left() + "\n");
+      vRightmost = gameArea.invaderFieldHitbox().right();
 
       if(wait) { // move 'forward' y axis by 10 pixels (? TODO: use yVelocity)
         gameArea.invadarr().a.forEach(function(row) {
@@ -849,14 +876,16 @@ function invaders(invaderCount = 1,
       else {
         // Check left and right vader boundaries
         let dist  = velocity.x; //* dt; //TODO: same movement w/ seconds
-        let distR = vRightmost.hitbox().right() + dist;
-        let distL = vLeftmost.hitbox().left() + dist;
+        // let distR = vRightmost.hitbox().right() + dist;
+        // let distL = vLeftmost.hitbox().left() + dist;
+        let distR = vRightmost + dist;
+        let distL = vLeftmost + dist;
 
         // Movement based on canvas boundary collisions
         // Right boundary of canvas
         if(distR > canvas.width) { 
           // Calculate distance needed to reach rightmost canvas edge
-          let toRightBound = canvas.width - vRightmost.hitbox().right();
+          let toRightBound = canvas.width - vRightmost;
 
           // Move all invaders distance needed for rightmost invader to reach
           // canvas edge (and then move opposite direction in the next instance)
@@ -872,7 +901,7 @@ function invaders(invaderCount = 1,
         // Left boundary of canvas
         else if(distL <= 0) { // left boundary, change direction  
           // make vaders touch left bound, same as distance of leftmost to bound
-          let toLeftBound = 0 - vLeftmost.hitbox().left();
+          let toLeftBound = 0 - vLeftmost;
 
           gameArea.invadarr().a.forEach(function(row) {
             row.forEach(function(invader) { // right boundary
