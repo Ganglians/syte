@@ -191,6 +191,16 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
     _drawRectangle(context, token);
   }
 
+  // Testing: Draw lines indicating hitbox boundaries (rectangular)
+  function _drawRectOutline(context, hb) {
+    ctx.beginPath();
+    ctx.globalAlpha = 1;
+    ctx.linewidth = "5";
+    ctx.strokeStyle = "white";
+    ctx.rect(hb.x, hb.y, hb.width, hb.height);
+    ctx.stroke();
+  }
+
   // method to draw all game tokens
   function _render() {
     // TODO: Move the gloval canvas variables here
@@ -215,12 +225,15 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
       if(!entity.collided) { // Intact tokens only
         if(entity instanceof playerToken) {
           _drawPlayer(ctx, entity);
+          _drawRectOutline(ctx, entity.hitbox()); // for TESTing
         }
         else if(entity instanceof invaderToken) {
           _drawInvader(ctx, entity);
+          _drawRectOutline(ctx, entity.hitbox()); // for TESTing
         }
         else { // Default, rectangular polygon
           _drawRectangle(ctx, entity);
+          _drawRectOutline(ctx, entity.hitbox()); // for TESTing
         }
       }
     });
@@ -228,6 +241,15 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
     gameArea.shots().forEach(function(shot) {
       _drawRectangle(ctx, shot);
     });
+
+    // for TESTing, draw invaders' collective hitbox
+    let ifh = gameArea.invaderFieldHitbox();
+    ctx.beginPath();
+    ctx.globalAlpha = 1;
+    ctx.linewidth = "5";
+    ctx.strokeStyle = "white";
+    ctx.rect(ifh.x, ifh.y, ifh.width, ifh.height);
+    ctx.stroke();
   }
 
   function _clear() { // clear entire canvas
@@ -469,20 +491,19 @@ var gameArea = (function() { // Singleton
     // Calculate FPS (for the display)
     fps = Math.round(1/dt);
 
-    _invadarr.a.forEach(function(row) { // Define collective invader hitbox
-      _invaderFieldHitbox = row.reduce(function(total, enemy) {
-        if(!enemy.collided) {
-          return rectUnion(total, enemy.hitbox());
+    // Calculate the hitbox surrounding every invader
+    _invaderFieldHitbox = _invadarr.a.reduce(function(total, row) {
+      return rectUnion(total, row.reduce(function(rowTotal, inv) {
+        if(!inv.collided) {
+          return rectUnion(rowTotal, inv.hitbox());
         }
         else {
-          return total;
+          return rowTotal;
         }
-      }, undefined);
-    });
-      // define/update hitbox representing invader bounds
-      //_invaderFieldHitbox = _invadarr.a.reduce(function(total, r) { return rectUnion(total, r.hitbox); }, undefined);
+      }, undefined));
+    }, undefined);
 
-    _player1.update(dt);
+    _player1.update(dt); // Time should only be observable on gameArea
     _player1.shoot(); // Update shotkeeper with any bullets player shot
 
     //WIP: Gonna edit invaders to move according to time passed
@@ -749,7 +770,7 @@ function invaders(invaderCount = 1,
                  {invaderWidth = 10, invaderHeight = 10}, 
                  gapSpace = 40, 
                  velocity, 
-                 frameRate = 10, // Makes invaders movement blocky
+                 frameRate = 7, // Makes invaders movement blocky
                  invaderRows = 2) {  
 
   this.invaderCount = invaderCount;
