@@ -119,7 +119,7 @@ function vector2dSubtract(v1, v2) {
   return new vector2d(v1.x - v2.x, v1.y - v2.y);
 }
 
-function vector2dDot(v1, v2) { // dot product //PLACEMAT
+function vector2dDot(v1, v2) { // dot product
   return v1.x * v2.x + v1.y * v2.y;
 }
 
@@ -173,7 +173,7 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
   // methods to draw specific game tokens (they don't look through stored 
   // tokens)
                              // variable will be defined internally 
-  function _drawRectangle(context, token) { // Generic rectangle
+  function _drawRectangle(token) { // Generic rectangle
     ctx.fillStyle = token.color;
     ctx.globalAlpha = 0.7; // Opacity
     // Since drawing starts at upper-lefthand corner
@@ -181,18 +181,19 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
       token.position.y - token.height/2, token.width, token.height); 
   }
 
-  function _drawPlayer(context, token) { // render player token
+  function _drawPlayer(token) { // render player token
     ctx.drawImage(imgRepo.player_token, token.position.x - token.width/2, 
       token.position.y - token.height/2, token.width, token.height);
   }
 
   // WiP: No invader sprite yet. Draw as a plain token (a rectangle)
-  function _drawInvader(context, token) { // render invader tokens
-    _drawRectangle(context, token);
+  function _drawInvader(token) { // render invader tokens
+    _drawRectangle(token);
   }
 
-  // Testing: Draw lines indicating hitbox boundaries (rectangular)
-  function _drawRectOutline(context, hb) {
+  // TEST: Stroke of rectangle object's border 
+  // use to visualize game token's hitbox boundaries (rectangular) 
+  function _drawRectOutline(hb) {
     ctx.beginPath();
     ctx.globalAlpha = 1;
     ctx.linewidth = "5";
@@ -202,10 +203,10 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
   }
 
   // method to draw all game tokens
-  function _render() {
+  function _render(dt = 0) { // TODO: make blind to time (ask gameArea for it)
     // TODO: Move the gloval canvas variables here
     // var canvas = document.getElementById("game-canvas");
-    let ctx = canvas.getContext("2d"); // rendering in two dimensions
+    //let ctx = canvas.getContext("2d"); // rendering in two dimensions
 
     // Example of a more C ++ approach to the loop:
     // var i,
@@ -224,25 +225,25 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
     gameArea.entities().forEach(function(entity) {
       if(!entity.collided) { // Intact tokens only
         if(entity instanceof playerToken) {
-          _drawPlayer(ctx, entity);
-          _drawRectOutline(ctx, entity.hitbox()); // for TESTing
+          _drawPlayer(entity);
+          _drawRectOutline(entity.hitbox()); // for TESTing HITBOX
         }
         else if(entity instanceof invaderToken) {
-          _drawInvader(ctx, entity);
-          _drawRectOutline(ctx, entity.hitbox()); // for TESTing
+          _drawInvader(entity);
+          _drawRectOutline(entity.hitbox()); // for TESTing HITBOX
         }
         else { // Default, rectangular polygon
-          _drawRectangle(ctx, entity);
-          _drawRectOutline(ctx, entity.hitbox()); // for TESTing
+          _drawRectangle(entity);
+          _drawRectOutline(entity.hitbox()); // for TESTing HITBOX
         }
       }
     });
 
     gameArea.shots().forEach(function(shot) {
-      _drawRectangle(ctx, shot);
+      _drawRectangle(shot);
     });
 
-    // for TESTing, draw invaders' collective hitbox
+    // for TESTing HITBOX, draw invaders' collective hitbox
     let ifh = gameArea.invaderFieldHitbox();
     ctx.beginPath();
     ctx.globalAlpha = 1;
