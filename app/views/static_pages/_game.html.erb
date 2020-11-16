@@ -402,7 +402,7 @@ var gameArea = (function() { // Singleton
     }
 
     // Initialize the properties of the array of invaders
-    function _setup(invaderCount = 1, invaderWidth = 80, invaderHeight = 20, gapSpace = 30, velocity, frameRate = 30 /* makes invader movement blocky*/, invaderRows = 2) { 
+    function _setup(invaderCount = 3, invaderWidth = 80, invaderHeight = 20, gapSpace = 30, velocity, frameRate = 30 /* makes invader movement blocky*/, invaderRows = 2) { 
       this._invaderCount = invaderCount;
       this._invaderWidth = invaderWidth;
       this._invaderHeight = invaderHeight;
@@ -426,9 +426,7 @@ var gameArea = (function() { // Singleton
       let next = this._invaderWidth + this._gapSpace;
       // Space between leftmost & rightmost invader boundaries and the canvas 
       // boundary
-      //let edgeSpace = (canvas.width - invaderCount *_invaderWidth - _gapSpace *(invaderCount - 1))/2;
       let edgeSpace = (canvas.width - this._invaderCount * (this._invaderWidth + this._gapSpace))/2 + this._gapSpace;
-      //let step = edgeSpace/5; // Arbitrary (get to evenly go to edge)
       // Where to begin drawing the invaders centered in the canvas' x axis
       let drawAt = edgeSpace;  
       // GRID
@@ -461,7 +459,6 @@ var gameArea = (function() { // Singleton
       }
 
       else { // Recycle invader array if it already existed
-        //xVelocity < 0 ? xVelocity * -1 : xVelocity; // make sure moving to right
         if(this._velocity.x < 0) { // make sure invaders initially moving to the right
           this._velocity.x *= -1;
         }
@@ -480,29 +477,15 @@ var gameArea = (function() { // Singleton
           y += rowSpace; // Y axis space for next row of invaders
         });
       }
-      //this.setup(); // Set (or reset, depending) frontliners array
-      this.reset();
+      this.reset(); // Set (or reset, depending) frontliners array
 
-      // SPEED AND DIRECTION
-      //xVelocity  = 10; // arbitrary (for now)
-      //yVelocity  = 1;
-      // velocity = {x: 10, y: 1};
       wait = false;
-      // Reference for vaders on both ends of array
-      //vLeftmost  = gameArea.invadarr().a[0][0];
-      //vRightmost = gameArea.invadarr().a[0][gameArea.invadarr().a[0].length - 1];
-      //vRightmost.xVelocity = 10; /*BUG1: magnitude = 30 */ // TODO: Replace vRightmost.magnitude with just an ordinary instance of magnitude (individual invaders might not need a speedboost defined, so it's wasted on them)
     }
 
     function _reset() {
       // Set up frontline invaders
       f = []; // erase previous values
-      // let frontliners = this.a[this.r - 1];
       f = a[r - 1]; // Reset frontline to frontmost array
-
-      // for(let i = 0; i < frontliners.length; i ++) {
-      //   this.f.push(frontliners[i]);
-      // }
     }
 
     function _update(dt = 0) {
@@ -511,7 +494,6 @@ var gameArea = (function() { // Singleton
         this.frameNum = 0; // Reset frame
 
         let vLeftmost = gameArea.invaderFieldHitbox().left();
-        //console.log("invaderFieldHitbox.left: " + gameArea.invaderFieldHitbox().left() + "\n");
         let vRightmost = gameArea.invaderFieldHitbox().right();
 
         if(wait) { // move 'forward' y axis by 10 pixels (? TODO: use yVelocity)
@@ -527,8 +509,6 @@ var gameArea = (function() { // Singleton
         else {
           // Check left and right vader boundaries
           let dist  = this._velocity.x; //* dt; //TODO: same movement w/ seconds
-          // let distR = vRightmost.hitbox().right() + dist;
-          // let distL = vLeftmost.hitbox().left() + dist;
           let distR = vRightmost + dist;
           let distL = vLeftmost + dist;
 
@@ -637,6 +617,7 @@ var gameArea = (function() { // Singleton
   function _start() {
     // PREP
     // Reset important variables
+    // set/reset hitbox that covers all invaders
     _invaderFieldHitbox = new rectangle(0,0,0,0);
 
     // Update canvas
@@ -650,10 +631,7 @@ var gameArea = (function() { // Singleton
 
     // Set up initial invader rows (use from stack if previous game played 
     // already)
-    // _inv.setup();
     _invadarr.setup();
-    // set/reset hitbox that covers all invaders
-    // _invaderFieldHitbox = new rectangle(0, 0, 0, 0);
     // Initialize structure that displays bullets (clears array)
     //shotKeeper.setup();
     // LOOP
