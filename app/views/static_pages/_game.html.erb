@@ -175,15 +175,14 @@ var renderer = (function() { // Note: context = ctx for now, later, the 'context
                              // variable will be defined internally 
   function _drawRectangle(token) { // Generic rectangle
     ctx.fillStyle = token.color;
-    ctx.globalAlpha = 0.7; // Opacity
-    // Since drawing starts at upper-lefthand corner
-    ctx.fillRect(token.position.x - token.width/2, 
-      token.position.y - token.height/2, token.width, token.height); 
+    ctx.globalAlpha = 0.7; // Opacity 
+
+    // Canvas drawing uses upper-lefthand corner as starting point, hitbox coordinates reference exactly that 
+    ctx.fillRect(token.hitbox().x, token.hitbox().y, token.width, token.height);
   }
 
   function _drawPlayer(token) { // render player token
-    ctx.drawImage(imgRepo.player_token, token.position.x - token.width/2, 
-      token.position.y - token.height/2, token.width, token.height);
+    ctx.drawImage(imgRepo.player_token, token.hitbox().x, token.hitbox().y, token.width, token.height);
   }
 
   // WiP: No invader sprite yet. Draw as a plain token (a rectangle)
@@ -554,7 +553,7 @@ var gameArea = (function() { // Singleton
 
     function _shoot() {
       // if(!this.wait) {
-      //   this.f.forEach(function(frontliner) { // Frontmost invaders will shoot
+      //   f.forEach(function(frontliner) { // Frontmost invaders will shoot
       //     if(!frontliner.collided) {
       //         frontliner.shoot();           
       //     }
